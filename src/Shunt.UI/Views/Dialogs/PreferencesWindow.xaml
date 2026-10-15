@@ -1,0 +1,131 @@
+<Window x:Class="Shunt.UI.Views.Dialogs.PreferencesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Shunt Preferences" Height="520" Width="720"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource CanvasBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        WindowStyle="None" ResizeMode="NoResize">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Border BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceLevel1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+                <DockPanel LastChildFill="True">
+                    <Button Content="✕" DockPanel.Dock="Right" Style="{StaticResource WindowButton}" Click="OnCloseClick"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <TextBlock Text="⚙" FontSize="14" Foreground="{StaticResource AccentCreamBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Preferences &amp; System Settings" Style="{StaticResource BodyBoldText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Tabbed Content -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="16,8,16,8">
+                <!-- General Tab -->
+                <TabItem Header="General">
+                    <StackPanel Margin="8,16">
+                        <CheckBox Content="Launch Shunt on Windows startup" IsChecked="True" Style="{StaticResource MasterToggleStyle}" Margin="0,0,0,16"/>
+                        <CheckBox Content="Minimize to Windows notification area (System Tray)" IsChecked="True" Margin="0,0,0,16"/>
+                        <CheckBox Content="Auto-switch profiles when game processes become active" IsChecked="True" Margin="0,0,0,20"/>
+
+                        <TextBlock Text="Hardware Input Polling Rate" Style="{StaticResource BodyBoldText}" Margin="0,0,0,6"/>
+                        <ComboBox x:Name="PollingRateCombo" Width="200" HorizontalAlignment="Left" Margin="0,0,0,16">
+                            <ComboBoxItem Content="125 Hz (Default 8ms)"/>
+                            <ComboBoxItem Content="250 Hz (4ms)"/>
+                            <ComboBoxItem Content="500 Hz (2ms)"/>
+                            <ComboBoxItem Content="1000 Hz (Competitive 1ms)" IsSelected="True"/>
+                        </ComboBox>
+                    </StackPanel>
+                </TabItem>
+
+                <!-- Drivers & Isolation Tab -->
+                <TabItem Header="Drivers &amp; Isolation">
+                    <Grid Margin="8,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Driver Status Badges -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="{StaticResource SurfaceLevel2Brush}" CornerRadius="6" Padding="12" Margin="0,0,6,0">
+                                <StackPanel>
+                                    <TextBlock Text="ViGEmBus Virtual Bus" Style="{StaticResource BodyBoldText}"/>
+                                    <TextBlock x:Name="ViGEmStatusText" Text="Status: INSTALLED &amp; READY" Foreground="{StaticResource StatusSuccessBrush}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="1" Background="{StaticResource SurfaceLevel2Brush}" CornerRadius="6" Padding="12" Margin="6,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="HidHide Kernel Filter" Style="{StaticResource BodyBoldText}"/>
+                                    <TextBlock x:Name="HidHideStatusText" Text="Status: AVAILABLE (Active Whitelist)" Foreground="{StaticResource StatusSuccessBrush}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <TextBlock Grid.Row="1" Text="HidHide Whitelisted Applications (Can access physical gamepads):" Style="{StaticResource BodyBoldText}" Margin="0,0,0,8"/>
+
+                        <!-- Whitelist Box -->
+                        <ListBox Grid.Row="2" x:Name="WhitelistListBox" Background="{StaticResource SurfaceLevel2Brush}"
+                                 BorderBrush="{StaticResource BorderSubtleBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                 Padding="6"/>
+
+                        <!-- Whitelist Actions -->
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="+ Add Application..." Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="OnAddWhitelistApp"/>
+                            <Button Content="Remove Selected" Style="{StaticResource SecondaryButton}" Click="OnRemoveWhitelistApp"/>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+
+                <!-- Appearance / Themes Tab -->
+                <TabItem Header="Appearance">
+                    <StackPanel Margin="8,16">
+                        <TextBlock Text="Color Theme" Style="{StaticResource BodyBoldText}" Margin="0,0,0,6"/>
+                        <ComboBox x:Name="ThemeCombo" Width="260" HorizontalAlignment="Left" Margin="0,0,0,16" SelectionChanged="OnThemeChanged">
+                            <ComboBoxItem Content="BaseTemplate (Carbon &amp; Cream Dark)" IsSelected="True"/>
+                            <ComboBoxItem Content="AimXP (Cyberpunk Midnight &amp; Cyan)"/>
+                        </ComboBox>
+
+                        <TextBlock Text="Accent Color preview:" Style="{StaticResource BodyMutedText}" Margin="0,0,0,8"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource AccentCreamBrush}" Margin="0,0,8,0"/>
+                            <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Shift1Brush}" Margin="0,0,8,0"/>
+                            <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Shift2Brush}" Margin="0,0,8,0"/>
+                            <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Shift3Brush}" Margin="0,0,8,0"/>
+                            <Border Width="30" Height="30" CornerRadius="4" Background="{StaticResource Shift4Brush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+
+            <!-- Bottom Action Footer -->
+            <Border Grid.Row="2" Background="{StaticResource SurfaceLevel1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0" Padding="16,8">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Save &amp; Apply" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Click="OnSaveClick"/>
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

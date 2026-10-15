@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="SharpDX.DirectInput" Version="4.2.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shunt.Core\Shunt.Core.csproj" />
+    <ProjectReference Include="..\..\src\Shunt.Profiles\Shunt.Profiles.csproj" />
+    <ProjectReference Include="..\..\src\Shunt.Emulation\Shunt.Emulation.csproj" />
+    <ProjectReference Include="..\..\src\Shunt.Engine\Shunt.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Shunt.Compiler\Shunt.Compiler.csproj" />
+  </ItemGroup>
+
+</Project>

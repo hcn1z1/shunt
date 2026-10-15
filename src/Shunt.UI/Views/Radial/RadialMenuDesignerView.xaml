@@ -1,0 +1,86 @@
+<UserControl x:Class="Shunt.UI.Views.Radial.RadialMenuDesignerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+    <Grid Background="{StaticResource CanvasBackgroundBrush}" Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="340"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Circular Canvas Visualizer -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                    <TextBlock Text="Radial Menu Wheel Designer" Style="{StaticResource SectionHeaderText}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="Sectors: " Style="{StaticResource BodyBoldText}" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="SectorCountCombo" Width="90" Margin="6,0,0,0" SelectionChanged="OnSectorCountChanged">
+                            <ComboBoxItem Content="4 Sectors"/>
+                            <ComboBoxItem Content="6 Sectors"/>
+                            <ComboBoxItem Content="8 Sectors" IsSelected="True"/>
+                        </ComboBox>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Interactive Wheel Surface -->
+                <Border Grid.Row="1" Background="{StaticResource SurfaceLevel2Brush}" CornerRadius="6" ClipToBounds="True">
+                    <Canvas x:Name="WheelCanvas" SizeChanged="OnWheelCanvasSizeChanged"/>
+                </Border>
+
+                <DockPanel Grid.Row="2" Margin="0,12,0,0">
+                    <TextBlock Text="Click a sector slice to customize label, icon and assigned shortcut." Style="{StaticResource BodyMutedText}" VerticalAlignment="Center"/>
+                    <Button Content="Show In-Game Overlay Preview" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Right" Click="OnShowOverlayPreview"/>
+                </DockPanel>
+            </Grid>
+        </Border>
+
+        <!-- Sector Inspector Sidebar -->
+        <Border Grid.Column="1" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="12,0,0,0">
+            <StackPanel>
+                <TextBlock Text="Sector Properties" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,16"/>
+
+                <TextBlock Text="Selected Sector:" Style="{StaticResource BodyBoldText}"/>
+                <TextBlock x:Name="SelectedSectorLabel" Text="Sector 1 (Top / North)" Style="{StaticResource BodyText}" Foreground="{StaticResource AccentCreamBrush}" Margin="0,4,0,12"/>
+
+                <TextBlock Text="Label / Name" Style="{StaticResource BodyBoldText}"/>
+                <TextBox x:Name="SectorNameBox" Text="Heal / Medkit" Style="{StaticResource DarkTextBox}" Margin="0,4,0,12" TextChanged="OnSectorNameChanged"/>
+
+                <TextBlock Text="Icon / Glyph" Style="{StaticResource BodyBoldText}"/>
+                <ComboBox x:Name="SectorIconCombo" Margin="0,4,0,12">
+                    <ComboBoxItem Content="Cross / Health" IsSelected="True"/>
+                    <ComboBoxItem Content="Shield / Armor"/>
+                    <ComboBoxItem Content="Sword / Melee"/>
+                    <ComboBoxItem Content="Gun / Weapon"/>
+                    <ComboBoxItem Content="Grenade / Explosive"/>
+                    <ComboBoxItem Content="Map / Radar"/>
+                    <ComboBoxItem Content="Potion / Boost"/>
+                    <ComboBoxItem Content="Emote / Social"/>
+                </ComboBox>
+
+                <TextBlock Text="Mapped Action / Key" Style="{StaticResource BodyBoldText}"/>
+                <TextBox x:Name="SectorActionBox" Text="Gamepad: Button B (Hold)" Style="{StaticResource DarkTextBox}" Margin="0,4,0,16"/>
+
+                <Separator Background="{StaticResource BorderSubtleBrush}" Margin="0,8,0,16"/>
+
+                <TextBlock Text="Deadzone Center Radius" Style="{StaticResource BodyBoldText}"/>
+                <DockPanel Margin="0,4,0,16">
+                    <TextBlock Text="25%" Style="{StaticResource BodyMutedText}" DockPanel.Dock="Right" Width="40" TextAlignment="Right"/>
+                    <Slider Minimum="10" Maximum="50" Value="25"/>
+                </DockPanel>
+
+                <Button Content="Save Sector Binding" Style="{StaticResource PrimaryButton}" Margin="0,8,0,0" Click="OnSaveSector"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,126 @@
+# ==========================================
+# User & Planning Folders
+# ==========================================
+commits/*
+plan/*
+
+# ==========================================
+# Executables, Libraries & Native Binaries
+# ==========================================
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.msi
+*.msp
+*.msm
+*.appx
+*.msix
+
+# ==========================================
+# Build Output Directories
+# ==========================================
+[Bb]in/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Pp]ublish/
+publish/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+bld/
+[Oo]ut/
+dist/
+Generated_Files/
+
+# ==========================================
+# Intermediate Build Caches & MSBuild Files
+# ==========================================
+*.cache
+*.lref
+*.baml
+*.g.cs
+*.g.i.cs
+*.i.cs
+*.tlog
+*.FileListAbsolute.txt
+*.Up2Date
+*.genruntimeconfig.cache
+*.genbundle.cache
+*.genpublishdeps.cache
+*.assets.cache
+*.AssemblyInfoInputs.cache
+*.CoreCompileInputs.cache
+*.AssemblyReference.cache
+
+# NuGet / Package Restore Caches
+project.assets.json
+project.nuget.cache
+*.nuget.g.props
+*.nuget.g.targets
+*.nuget.dgspec.json
+*.nupkg
+*.snupkg
+packages/
+
+# ==========================================
+# Visual Studio & IDE Artifacts
+# ==========================================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.launchSettings.json
+*.ide
+
+# Visual Studio Code & JetBrains Rider
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.history/
+*.history/
+
+# ==========================================
+# Test Results & Code Coverage
+# ==========================================
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# ==========================================
+# Drivers, Certificates & Virtual Devices
+# ==========================================
+*.sys
+*.cer
+*.pfx
+
+# ==========================================
+# Logs, Temp Files & OS Metadata
+# ==========================================
+*.log
+[Ll]og/
+[Ll]ogs/
+*.tmp
+*.bak
+*.swp
+*~
+*.lock
+*.zip
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+.DS_Store

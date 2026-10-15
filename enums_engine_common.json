@@ -1,0 +1,974 @@
+{
+  "SharpVectors.Runtime.SvgLinkAction": [
+    {
+      "Name": "LinkNone",
+      "Value": 0
+    },
+    {
+      "Name": "LinkPage",
+      "Value": 1
+    },
+    {
+      "Name": "LinkHtml",
+      "Value": 2
+    },
+    {
+      "Name": "LinkTooltip",
+      "Value": 3
+    }
+  ],
+  "SharpVectors.Runtime.SvgObjectType": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "Link",
+      "Value": 1
+    },
+    {
+      "Name": "Text",
+      "Value": 2
+    },
+    {
+      "Name": "Circle",
+      "Value": 3
+    },
+    {
+      "Name": "Ellipse",
+      "Value": 4
+    },
+    {
+      "Name": "Rect",
+      "Value": 5
+    },
+    {
+      "Name": "Polyline",
+      "Value": 6
+    },
+    {
+      "Name": "Polygon",
+      "Value": 7
+    },
+    {
+      "Name": "Marker",
+      "Value": 8
+    },
+    {
+      "Name": "Image",
+      "Value": 9
+    },
+    {
+      "Name": "Group",
+      "Value": 10
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.BalloonIcon": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "Info",
+      "Value": 1
+    },
+    {
+      "Name": "Warning",
+      "Value": 2
+    },
+    {
+      "Name": "Error",
+      "Value": 3
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.PopupActivationMode": [
+    {
+      "Name": "LeftClick",
+      "Value": 0
+    },
+    {
+      "Name": "RightClick",
+      "Value": 1
+    },
+    {
+      "Name": "DoubleClick",
+      "Value": 2
+    },
+    {
+      "Name": "LeftOrRightClick",
+      "Value": 3
+    },
+    {
+      "Name": "LeftOrDoubleClick",
+      "Value": 4
+    },
+    {
+      "Name": "MiddleClick",
+      "Value": 5
+    },
+    {
+      "Name": "All",
+      "Value": 6
+    }
+  ],
+  "ScreenEdge": [
+    {
+      "Name": "Undefined",
+      "Value": -1
+    },
+    {
+      "Name": "Left",
+      "Value": 0
+    },
+    {
+      "Name": "Top",
+      "Value": 1
+    },
+    {
+      "Name": "Right",
+      "Value": 2
+    },
+    {
+      "Name": "Bottom",
+      "Value": 3
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.BalloonFlags": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "Info",
+      "Value": 1
+    },
+    {
+      "Name": "Warning",
+      "Value": 2
+    },
+    {
+      "Name": "Error",
+      "Value": 3
+    },
+    {
+      "Name": "User",
+      "Value": 4
+    },
+    {
+      "Name": "NoSound",
+      "Value": 16
+    },
+    {
+      "Name": "LargeIcon",
+      "Value": 32
+    },
+    {
+      "Name": "RespectQuietTime",
+      "Value": 128
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.IconDataMembers": [
+    {
+      "Name": "Message",
+      "Value": 1
+    },
+    {
+      "Name": "Icon",
+      "Value": 2
+    },
+    {
+      "Name": "Tip",
+      "Value": 4
+    },
+    {
+      "Name": "State",
+      "Value": 8
+    },
+    {
+      "Name": "Info",
+      "Value": 16
+    },
+    {
+      "Name": "Realtime",
+      "Value": 64
+    },
+    {
+      "Name": "UseLegacyToolTips",
+      "Value": 128
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.IconState": [
+    {
+      "Name": "Visible",
+      "Value": 0
+    },
+    {
+      "Name": "Hidden",
+      "Value": 1
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.MouseEvent": [
+    {
+      "Name": "MouseMove",
+      "Value": 0
+    },
+    {
+      "Name": "IconRightMouseDown",
+      "Value": 1
+    },
+    {
+      "Name": "IconLeftMouseDown",
+      "Value": 2
+    },
+    {
+      "Name": "IconRightMouseUp",
+      "Value": 3
+    },
+    {
+      "Name": "IconLeftMouseUp",
+      "Value": 4
+    },
+    {
+      "Name": "IconMiddleMouseDown",
+      "Value": 5
+    },
+    {
+      "Name": "IconMiddleMouseUp",
+      "Value": 6
+    },
+    {
+      "Name": "IconDoubleClick",
+      "Value": 7
+    },
+    {
+      "Name": "BalloonToolTipClicked",
+      "Value": 8
+    },
+    {
+      "Name": "ContextMenuPressed",
+      "Value": 9
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.NotifyCommand": [
+    {
+      "Name": "Add",
+      "Value": 0
+    },
+    {
+      "Name": "Modify",
+      "Value": 1
+    },
+    {
+      "Name": "Delete",
+      "Value": 2
+    },
+    {
+      "Name": "SetFocus",
+      "Value": 3
+    },
+    {
+      "Name": "SetVersion",
+      "Value": 4
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.NotifyIconVersion": [
+    {
+      "Name": "Win95",
+      "Value": 0
+    },
+    {
+      "Name": "Win2000",
+      "Value": 3
+    },
+    {
+      "Name": "Vista",
+      "Value": 4
+    }
+  ],
+  "Hardcodet.Wpf.TaskbarNotification.Interop.WindowsMessages": [
+    {
+      "Name": "WM_CONTEXTMENU",
+      "Value": 123
+    },
+    {
+      "Name": "WM_MOUSEMOVE",
+      "Value": 512
+    },
+    {
+      "Name": "WM_LBUTTONDOWN",
+      "Value": 513
+    },
+    {
+      "Name": "WM_LBUTTONUP",
+      "Value": 514
+    },
+    {
+      "Name": "WM_LBUTTONDBLCLK",
+      "Value": 515
+    },
+    {
+      "Name": "WM_RBUTTONDOWN",
+      "Value": 516
+    },
+    {
+      "Name": "WM_RBUTTONUP",
+      "Value": 517
+    },
+    {
+      "Name": "WM_RBUTTONDBLCLK",
+      "Value": 518
+    },
+    {
+      "Name": "WM_MBUTTONDOWN",
+      "Value": 519
+    },
+    {
+      "Name": "WM_MBUTTONUP",
+      "Value": 520
+    },
+    {
+      "Name": "WM_MBUTTONDBLCLK",
+      "Value": 521
+    },
+    {
+      "Name": "WM_USER",
+      "Value": 1024
+    },
+    {
+      "Name": "NIN_SELECT",
+      "Value": 1024
+    },
+    {
+      "Name": "NIN_KEYSELECT",
+      "Value": 1025
+    },
+    {
+      "Name": "NIN_BALLOONSHOW",
+      "Value": 1026
+    },
+    {
+      "Name": "NIN_BALLOONHIDE",
+      "Value": 1027
+    },
+    {
+      "Name": "NIN_BALLOONTIMEOUT",
+      "Value": 1028
+    },
+    {
+      "Name": "NIN_BALLOONUSERCLICK",
+      "Value": 1029
+    },
+    {
+      "Name": "NIN_POPUPOPEN",
+      "Value": 1030
+    },
+    {
+      "Name": "NIN_POPUPCLOSE",
+      "Value": 1031
+    }
+  ],
+  "HL.IconPro.Lib.Core.FileType": [
+    {
+      "Name": "ICON",
+      "Value": 1
+    },
+    {
+      "Name": "CURSOR",
+      "Value": 2
+    }
+  ],
+  "HL.IconPro.Lib.Core.FrameType": [
+    {
+      "Name": "PNG",
+      "Value": 0
+    },
+    {
+      "Name": "BITMAP",
+      "Value": 1
+    }
+  ],
+  "Operation": [
+    {
+      "Name": "none",
+      "Value": 0
+    },
+    {
+      "Name": "and",
+      "Value": 1
+    },
+    {
+      "Name": "or",
+      "Value": 2
+    }
+  ],
+  "MapType": [
+    {
+      "Name": "MAPVK_VK_TO_VSC",
+      "Value": 0
+    },
+    {
+      "Name": "MAPVK_VSC_TO_VK",
+      "Value": 1
+    },
+    {
+      "Name": "MAPVK_VK_TO_CHAR",
+      "Value": 2
+    },
+    {
+      "Name": "MAPVK_VSC_TO_VK_EX",
+      "Value": 3
+    },
+    {
+      "Name": "MAPVK_VK_TO_VSC_EX",
+      "Value": 4
+    }
+  ],
+  "KeyboardState": [
+    {
+      "Name": "KeyDown",
+      "Value": 256
+    },
+    {
+      "Name": "KeyUp",
+      "Value": 257
+    },
+    {
+      "Name": "SysKeyDown",
+      "Value": 260
+    },
+    {
+      "Name": "SysKeyUp",
+      "Value": 261
+    }
+  ],
+  "FrameDisposalMethod": [
+    {
+      "Name": "Replace",
+      "Value": 0
+    },
+    {
+      "Name": "Combine",
+      "Value": 1
+    },
+    {
+      "Name": "RestoreBackground",
+      "Value": 2
+    },
+    {
+      "Name": "RestorePrevious",
+      "Value": 3
+    }
+  ],
+  "MoveFileFlags": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "ReplaceExisting",
+      "Value": 1
+    },
+    {
+      "Name": "CopyAllowed",
+      "Value": 2
+    },
+    {
+      "Name": "DelayUntilReboot",
+      "Value": 4
+    },
+    {
+      "Name": "WriteThrough",
+      "Value": 8
+    },
+    {
+      "Name": "CreateHardlink",
+      "Value": 16
+    },
+    {
+      "Name": "FailIfNotTrackable",
+      "Value": 32
+    }
+  ],
+  "HChangeNotifyFlags": [
+    {
+      "Name": "SHCNF_DWORD",
+      "Value": 3
+    },
+    {
+      "Name": "SHCNF_IDLIST",
+      "Value": 0
+    },
+    {
+      "Name": "SHCNF_PATHA",
+      "Value": 1
+    },
+    {
+      "Name": "SHCNF_PATHW",
+      "Value": 5
+    },
+    {
+      "Name": "SHCNF_PRINTERA",
+      "Value": 2
+    },
+    {
+      "Name": "SHCNF_PRINTERW",
+      "Value": 6
+    },
+    {
+      "Name": "SHCNF_FLUSH",
+      "Value": 4096
+    },
+    {
+      "Name": "SHCNF_FLUSHNOWAIT",
+      "Value": 8192
+    }
+  ],
+  "HChangeNotifyEventID": [
+    {
+      "Name": "SHCNE_ALLEVENTS",
+      "Value": 2147483647
+    },
+    {
+      "Name": "SHCNE_ASSOCCHANGED",
+      "Value": 134217728
+    },
+    {
+      "Name": "SHCNE_ATTRIBUTES",
+      "Value": 2048
+    },
+    {
+      "Name": "SHCNE_CREATE",
+      "Value": 2
+    },
+    {
+      "Name": "SHCNE_DELETE",
+      "Value": 4
+    },
+    {
+      "Name": "SHCNE_DRIVEADD",
+      "Value": 256
+    },
+    {
+      "Name": "SHCNE_DRIVEADDGUI",
+      "Value": 65536
+    },
+    {
+      "Name": "SHCNE_DRIVEREMOVED",
+      "Value": 128
+    },
+    {
+      "Name": "SHCNE_EXTENDED_EVENT",
+      "Value": 67108864
+    },
+    {
+      "Name": "SHCNE_FREESPACE",
+      "Value": 262144
+    },
+    {
+      "Name": "SHCNE_MEDIAINSERTED",
+      "Value": 32
+    },
+    {
+      "Name": "SHCNE_MEDIAREMOVED",
+      "Value": 64
+    },
+    {
+      "Name": "SHCNE_MKDIR",
+      "Value": 8
+    },
+    {
+      "Name": "SHCNE_NETSHARE",
+      "Value": 512
+    },
+    {
+      "Name": "SHCNE_NETUNSHARE",
+      "Value": 1024
+    },
+    {
+      "Name": "SHCNE_RENAMEFOLDER",
+      "Value": 131072
+    },
+    {
+      "Name": "SHCNE_RENAMEITEM",
+      "Value": 1
+    },
+    {
+      "Name": "SHCNE_RMDIR",
+      "Value": 16
+    },
+    {
+      "Name": "SHCNE_SERVERDISCONNECT",
+      "Value": 16384
+    },
+    {
+      "Name": "SHCNE_UPDATEDIR",
+      "Value": 4096
+    },
+    {
+      "Name": "SHCNE_UPDATEIMAGE",
+      "Value": 32768
+    }
+  ],
+  "Engine.NET.Common.Utils.ScreenMonitorStuff.CaptureMode": [
+    {
+      "Name": "Screen",
+      "Value": 0
+    },
+    {
+      "Name": "Window",
+      "Value": 1
+    }
+  ],
+  "Engine.NET.Common.Utils.NavigationServiceHtml.HTMLTagEnum": [
+    {
+      "Name": "eLink",
+      "Value": 0
+    },
+    {
+      "Name": "eBold",
+      "Value": 1
+    },
+    {
+      "Name": "eH1",
+      "Value": 2
+    },
+    {
+      "Name": "eH2",
+      "Value": 3
+    },
+    {
+      "Name": "eH3",
+      "Value": 4
+    },
+    {
+      "Name": "eFontColor",
+      "Value": 5
+    },
+    {
+      "Name": "eFontBoldColor",
+      "Value": 6
+    }
+  ],
+  "LogmanExitCode": [
+    {
+      "Name": "DataCollectorSetNotFound",
+      "Value": -2144337918
+    },
+    {
+      "Name": "DataCollectorSetNotRunning",
+      "Value": -2144337660
+    }
+  ],
+  "Engine.NET.Common.DSEnums.BitMask": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "A",
+      "Value": 1
+    },
+    {
+      "Name": "B",
+      "Value": 2
+    },
+    {
+      "Name": "C",
+      "Value": 4
+    },
+    {
+      "Name": "D",
+      "Value": 8
+    },
+    {
+      "Name": "E",
+      "Value": 16
+    },
+    {
+      "Name": "F",
+      "Value": 32
+    },
+    {
+      "Name": "G",
+      "Value": 64
+    },
+    {
+      "Name": "H",
+      "Value": 128
+    }
+  ],
+  "Engine.NET.Common.DSEnums.GenericUacOperationResult": [
+    {
+      "Name": "Succes",
+      "Value": 0
+    },
+    {
+      "Name": "Failed",
+      "Value": 1
+    },
+    {
+      "Name": "FailedUacRequestDenied",
+      "Value": 2
+    }
+  ],
+  "Engine.NET.Common.DSEnums.Win32ErrorCodes": [
+    {
+      "Name": "ERROR_SUCCESS",
+      "Value": 0
+    },
+    {
+      "Name": "ERROR_PATH_NOT_FOUND",
+      "Value": 3
+    },
+    {
+      "Name": "ERROR_ACCESS_DENIED",
+      "Value": 5
+    },
+    {
+      "Name": "ERROR_FILE_EXISTS",
+      "Value": 80
+    },
+    {
+      "Name": "ERROR_FAIL_NOACTION_REBOOT",
+      "Value": 350
+    },
+    {
+      "Name": "ERROR_ELEVATION_REQUIRED",
+      "Value": 740
+    },
+    {
+      "Name": "ERROR_CANCELLED",
+      "Value": 1223
+    },
+    {
+      "Name": "ERROR_TIMEOUT",
+      "Value": 1460
+    },
+    {
+      "Name": "ERROR_SUCCESS_REBOOT_REQUIRED",
+      "Value": 3010
+    },
+    {
+      "Name": "ERROR_UNSPECIFIED_FAILURE",
+      "Value": -2147467259
+    }
+  ],
+  "SHGSI": [
+    {
+      "Name": "SHGSI_ICONLOCATION",
+      "Value": 0
+    },
+    {
+      "Name": "SHGSI_ICON",
+      "Value": 256
+    },
+    {
+      "Name": "SHGSI_SYSICONINDEX",
+      "Value": 16384
+    },
+    {
+      "Name": "SHGSI_LINKOVERLAY",
+      "Value": 32768
+    },
+    {
+      "Name": "SHGSI_SELECTED",
+      "Value": 65536
+    },
+    {
+      "Name": "SHGSI_LARGEICON",
+      "Value": 0
+    },
+    {
+      "Name": "SHGSI_SMALLICON",
+      "Value": 1
+    },
+    {
+      "Name": "SHGSI_SHELLICONSIZE",
+      "Value": 4
+    }
+  ],
+  "ResizeDirection": [
+    {
+      "Name": "Left",
+      "Value": 1
+    },
+    {
+      "Name": "Right",
+      "Value": 2
+    },
+    {
+      "Name": "Top",
+      "Value": 3
+    },
+    {
+      "Name": "TopLeft",
+      "Value": 4
+    },
+    {
+      "Name": "TopRight",
+      "Value": 5
+    },
+    {
+      "Name": "Bottom",
+      "Value": 6
+    },
+    {
+      "Name": "BottomLeft",
+      "Value": 7
+    },
+    {
+      "Name": "BottomRight",
+      "Value": 8
+    }
+  ],
+  "Restriction": [
+    {
+      "Name": "Undefined",
+      "Value": 0
+    },
+    {
+      "Name": "EmailSingle",
+      "Value": 1
+    },
+    {
+      "Name": "EmailMultiple",
+      "Value": 2
+    },
+    {
+      "Name": "Serial",
+      "Value": 3
+    }
+  ],
+  "TokenInformationClass": [
+    {
+      "Name": "TokenUser",
+      "Value": 1
+    },
+    {
+      "Name": "TokenGroups",
+      "Value": 2
+    },
+    {
+      "Name": "TokenPrivileges",
+      "Value": 3
+    },
+    {
+      "Name": "TokenOwner",
+      "Value": 4
+    },
+    {
+      "Name": "TokenPrimaryGroup",
+      "Value": 5
+    },
+    {
+      "Name": "TokenDefaultDacl",
+      "Value": 6
+    },
+    {
+      "Name": "TokenSource",
+      "Value": 7
+    },
+    {
+      "Name": "TokenType",
+      "Value": 8
+    },
+    {
+      "Name": "TokenImpersonationLevel",
+      "Value": 9
+    },
+    {
+      "Name": "TokenStatistics",
+      "Value": 10
+    },
+    {
+      "Name": "TokenRestrictedSids",
+      "Value": 11
+    },
+    {
+      "Name": "TokenSessionId",
+      "Value": 12
+    },
+    {
+      "Name": "TokenGroupsAndPrivileges",
+      "Value": 13
+    },
+    {
+      "Name": "TokenSessionReference",
+      "Value": 14
+    },
+    {
+      "Name": "TokenSandBoxInert",
+      "Value": 15
+    },
+    {
+      "Name": "TokenAuditPolicy",
+      "Value": 16
+    },
+    {
+      "Name": "TokenOrigin",
+      "Value": 17
+    },
+    {
+      "Name": "TokenElevationType",
+      "Value": 18
+    },
+    {
+      "Name": "TokenLinkedToken",
+      "Value": 19
+    },
+    {
+      "Name": "TokenElevation",
+      "Value": 20
+    },
+    {
+      "Name": "TokenHasRestrictions",
+      "Value": 21
+    },
+    {
+      "Name": "TokenAccessInformation",
+      "Value": 22
+    },
+    {
+      "Name": "TokenVirtualizationAllowed",
+      "Value": 23
+    },
+    {
+      "Name": "TokenVirtualizationEnabled",
+      "Value": 24
+    },
+    {
+      "Name": "TokenIntegrityLevel",
+      "Value": 25
+    },
+    {
+      "Name": "TokenUIAccess",
+      "Value": 26
+    },
+    {
+      "Name": "TokenMandatoryPolicy",
+      "Value": 27
+    },
+    {
+      "Name": "TokenLogonSid",
+      "Value": 28
+    },
+    {
+      "Name": "MaxTokenInfoClass",
+      "Value": 29
+    }
+  ],
+  "TokenElevationType": [
+    {
+      "Name": "TokenElevationTypeDefault",
+      "Value": 1
+    },
+    {
+      "Name": "TokenElevationTypeFull",
+      "Value": 2
+    },
+    {
+      "Name": "TokenElevationTypeLimited",
+      "Value": 3
+    }
+  ]
+}

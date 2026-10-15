@@ -1,0 +1,76 @@
+<Window x:Class="Shunt.UI.Views.Dialogs.GroupDevicesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Composite Device Grouping" Height="480" Width="640"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource CanvasBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        WindowStyle="None" ResizeMode="NoResize">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38" GlassFrameThickness="0" CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Border BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceLevel1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
+                <DockPanel LastChildFill="True">
+                    <Button Content="✕" DockPanel.Dock="Right" Style="{StaticResource WindowButton}" Click="OnCloseClick"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                        <TextBlock Text="🔗" FontSize="14" Foreground="{StaticResource AccentCreamBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Composite Device Grouping Wizard" Style="{StaticResource BodyBoldText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Main Content -->
+            <StackPanel Grid.Row="1" Margin="24,16">
+                <TextBlock Text="Group Physical Devices" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <TextBlock Text="Combine multiple physical controllers, mice, or keyboards into a single unified composite device. Inputs from all grouped devices are aggregated into one virtual gamepad."
+                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+                <TextBlock Text="Group Name:" Style="{StaticResource BodyBoldText}" Margin="0,0,0,6"/>
+                <TextBox x:Name="GroupNameBox" Height="28" Background="{StaticResource SurfaceLevel2Brush}"
+                         Foreground="{StaticResource TextPrimaryBrush}" BorderBrush="{StaticResource BorderSubtleBrush}"
+                         Padding="6,4" Text="Composite Controller Group" Margin="0,0,0,16"/>
+
+                <TextBlock Text="Select physical devices to include in this group:" Style="{StaticResource BodyBoldText}" Margin="0,0,0,8"/>
+                <Border Background="{StaticResource SurfaceLevel2Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="4" Height="170" Margin="0,0,0,16">
+                    <ListBox x:Name="DevicesListBox" Background="Transparent" BorderThickness="0" Padding="8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}" Margin="4,4">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Medium" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,8,0"/>
+                                        <Border Background="{StaticResource SurfaceLevel3Brush}" CornerRadius="3" Padding="4,1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Type}" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        </Border>
+                                        <TextBlock Text=" · " Foreground="{StaticResource TextMutedBrush}"/>
+                                        <TextBlock Text="{Binding ConnectionType}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                </CheckBox>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </StackPanel>
+
+            <!-- Bottom Action Footer -->
+            <Border Grid.Row="2" Background="{StaticResource SurfaceLevel1Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0" Padding="16,8">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Save &amp; Unify Group" Style="{StaticResource PrimaryButton}" Margin="0,0,8,0" Click="OnSaveClick"/>
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Click="OnCloseClick"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

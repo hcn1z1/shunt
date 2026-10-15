@@ -1,0 +1,156 @@
+<UserControl x:Class="Shunt.UI.Views.Tuners.StickCurvesVisualizer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="900">
+    <Grid Background="{StaticResource CanvasBackgroundBrush}" Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="340"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Curve Canvas -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title & Presets -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                    <TextBlock Text="Stick Response Curve (Cubic Bezier)" Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="LinearPresetBtn" Content="Linear" Style="{StaticResource SecondaryButton}" Padding="8,4" Margin="2,0" Click="OnPresetClick"/>
+                        <Button x:Name="InstantPresetBtn" Content="Instant" Style="{StaticResource SecondaryButton}" Padding="8,4" Margin="2,0" Click="OnPresetClick"/>
+                        <Button x:Name="SmoothPresetBtn" Content="Smooth" Style="{StaticResource SecondaryButton}" Padding="8,4" Margin="2,0" Click="OnPresetClick"/>
+                        <Button x:Name="AggressivePresetBtn" Content="Aggressive" Style="{StaticResource SecondaryButton}" Padding="8,4" Margin="2,0" Click="OnPresetClick"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- 2D Coordinate Plane -->
+                <Border Grid.Row="1" Background="{StaticResource SurfaceLevel2Brush}" CornerRadius="6"
+                        BorderBrush="{StaticResource BorderNormalBrush}" BorderThickness="1" ClipToBounds="True">
+                    <Canvas x:Name="PlotCanvas" SizeChanged="OnCanvasSizeChanged">
+                        <!-- Grid Lines -->
+                        <Line x:Name="GridLineX25" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+                        <Line x:Name="GridLineX50" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+                        <Line x:Name="GridLineX75" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+                        <Line x:Name="GridLineY25" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+                        <Line x:Name="GridLineY50" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+                        <Line x:Name="GridLineY75" Stroke="{StaticResource BorderSubtleBrush}" StrokeDashArray="2,2"/>
+
+                        <!-- Deadzone overlays -->
+                        <Rectangle x:Name="DeadzoneRect" Fill="#20FF5555"/>
+                        <Rectangle x:Name="MaxThresholdRect" Fill="#20FFE795"/>
+
+                        <!-- Linear reference line -->
+                        <Line x:Name="RefLine" Stroke="#30FFFFFF" StrokeDashArray="4,4"/>
+
+                        <!-- Bezier curve path -->
+                        <Path x:Name="CurvePath" Stroke="{StaticResource AccentCreamBrush}" StrokeThickness="3">
+                            <Path.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="#FFE795" Opacity="0.5"/>
+                            </Path.Effect>
+                        </Path>
+
+                        <!-- Control Handles -->
+                        <Line x:Name="Handle1Line" Stroke="#60FFE795" StrokeThickness="1"/>
+                        <Line x:Name="Handle2Line" Stroke="#60FFE795" StrokeThickness="1"/>
+
+                        <!-- Live GraphDot Glow -->
+                        <Ellipse x:Name="GraphDot" Width="14" Height="14" Fill="{StaticResource StatusSuccessBrush}">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#81CF66" Opacity="0.9"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                    </Canvas>
+                </Border>
+
+                <!-- Axis Labels -->
+                <DockPanel Grid.Row="2" Margin="0,8,0,0">
+                    <TextBlock Text="Physical Deflection 0%" Style="{StaticResource BodyMutedText}"/>
+                    <TextBlock Text="Live Telemetry: (X: 0.65, Y: 0.72) -> Virtual: 0.81" x:Name="TelemetryText"
+                               Style="{StaticResource BodyText}" Foreground="{StaticResource StatusSuccessBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="100%" Style="{StaticResource BodyMutedText}" HorizontalAlignment="Right"/>
+                </DockPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tuning Parameters Sidebar -->
+        <Border Grid.Column="1" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="12,0,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Curve &amp; Deadzone Tuning" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,16"/>
+
+                    <!-- Control Point 1 -->
+                    <TextBlock Text="Control Point 1 (P1)" Style="{StaticResource BodyBoldText}"/>
+                    <Grid Margin="0,4,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                            <TextBlock Text="X1" Style="{StaticResource BodyMutedText}"/>
+                            <Slider x:Name="P1XSlider" Minimum="0" Maximum="1" Value="0.33" ValueChanged="OnParamChanged"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                            <TextBlock Text="Y1" Style="{StaticResource BodyMutedText}"/>
+                            <Slider x:Name="P1YSlider" Minimum="0" Maximum="1" Value="0.33" ValueChanged="OnParamChanged"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Control Point 2 -->
+                    <TextBlock Text="Control Point 2 (P2)" Style="{StaticResource BodyBoldText}"/>
+                    <Grid Margin="0,4,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                            <TextBlock Text="X2" Style="{StaticResource BodyMutedText}"/>
+                            <Slider x:Name="P2XSlider" Minimum="0" Maximum="1" Value="0.66" ValueChanged="OnParamChanged"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                            <TextBlock Text="Y2" Style="{StaticResource BodyMutedText}"/>
+                            <Slider x:Name="P2YSlider" Minimum="0" Maximum="1" Value="0.66" ValueChanged="OnParamChanged"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Separator Background="{StaticResource BorderSubtleBrush}" Margin="0,8,0,16"/>
+
+                    <!-- Deadzone settings -->
+                    <TextBlock Text="Inner Deadzone" Style="{StaticResource BodyBoldText}"/>
+                    <DockPanel Margin="0,4,0,12">
+                        <TextBlock x:Name="InnerDeadzoneVal" Text="8%" Style="{StaticResource BodyMutedText}" DockPanel.Dock="Right" Width="40" TextAlignment="Right"/>
+                        <Slider x:Name="InnerDeadzoneSlider" Minimum="0" Maximum="0.30" Value="0.08" ValueChanged="OnDeadzoneChanged"/>
+                    </DockPanel>
+
+                    <TextBlock Text="Outer Threshold (Saturation)" Style="{StaticResource BodyBoldText}"/>
+                    <DockPanel Margin="0,4,0,16">
+                        <TextBlock x:Name="OuterDeadzoneVal" Text="2%" Style="{StaticResource BodyMutedText}" DockPanel.Dock="Right" Width="40" TextAlignment="Right"/>
+                        <Slider x:Name="OuterDeadzoneSlider" Minimum="0" Maximum="0.25" Value="0.02" ValueChanged="OnDeadzoneChanged"/>
+                    </DockPanel>
+
+                    <Separator Background="{StaticResource BorderSubtleBrush}" Margin="0,8,0,16"/>
+
+                    <!-- Square Stick Coordinates -->
+                    <DockPanel Margin="0,0,0,16">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Square Coordinates" Style="{StaticResource BodyBoldText}"/>
+                            <TextBlock Text="Stretches diagonals to 100% boundary" Style="{StaticResource BodyMutedText}"/>
+                        </StackPanel>
+                        <CheckBox x:Name="SquareStickCheck" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- Reset Button -->
+                    <Button Content="Reset to Linear" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Stretch" Margin="0,12,0,0" Click="OnResetClick"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

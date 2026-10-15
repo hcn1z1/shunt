@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <Content Include="..\..\profiles\*.rewasd" Link="profiles\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shunt.Core\Shunt.Core.csproj" />
+    <ProjectReference Include="..\Shunt.Profiles\Shunt.Profiles.csproj" />
+    <ProjectReference Include="..\Shunt.Engine\Shunt.Engine.csproj" />
+    <ProjectReference Include="..\Shunt.Emulation\Shunt.Emulation.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\icon.ico" />
+    <Resource Include="Assets\icon.png" />
+    <Resource Include="Assets\icon-transparent.png" />
+    <Resource Include="Assets\icon-64.png" />
+    <Resource Include="Assets\icon-32.png" />
+    <Resource Include="Assets\logo-transparent.png" />
+  </ItemGroup>
+
+</Project>

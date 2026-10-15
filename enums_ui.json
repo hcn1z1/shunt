@@ -1,0 +1,442 @@
+{
+  "AnimationType": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "Fade",
+      "Value": 1
+    }
+  ],
+  "reWASDUI.Services.CommandLineParam": [
+    {
+      "Name": "clpNone",
+      "Value": 0
+    },
+    {
+      "Name": "clpImport",
+      "Value": 1
+    },
+    {
+      "Name": "clpOpenAgentSettings",
+      "Value": 2
+    },
+    {
+      "Name": "clpShowMembership",
+      "Value": 3
+    }
+  ],
+  "ViewParam": [
+    {
+      "Name": "Mappings",
+      "Value": 0
+    },
+    {
+      "Name": "Label",
+      "Value": 1
+    },
+    {
+      "Name": "All",
+      "Value": 2
+    }
+  ],
+  "reWASDUI.Properties.ImplicitUseKindFlags": [
+    {
+      "Name": "Default",
+      "Value": 7
+    },
+    {
+      "Name": "Access",
+      "Value": 1
+    },
+    {
+      "Name": "Assign",
+      "Value": 2
+    },
+    {
+      "Name": "InstantiatedWithFixedConstructorSignature",
+      "Value": 4
+    },
+    {
+      "Name": "InstantiatedNoFixedConstructorSignature",
+      "Value": 8
+    }
+  ],
+  "reWASDUI.Properties.ImplicitUseTargetFlags": [
+    {
+      "Name": "Default",
+      "Value": 1
+    },
+    {
+      "Name": "Itself",
+      "Value": 1
+    },
+    {
+      "Name": "Members",
+      "Value": 2
+    },
+    {
+      "Name": "WithMembers",
+      "Value": 3
+    }
+  ],
+  "reWASDUI.Properties.CollectionAccessType": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "Read",
+      "Value": 1
+    },
+    {
+      "Name": "ModifyExistingContent",
+      "Value": 2
+    },
+    {
+      "Name": "UpdatedContent",
+      "Value": 6
+    }
+  ],
+  "reWASDUI.Properties.AssertionConditionType": [
+    {
+      "Name": "IS_TRUE",
+      "Value": 0
+    },
+    {
+      "Name": "IS_FALSE",
+      "Value": 1
+    },
+    {
+      "Name": "IS_NULL",
+      "Value": 2
+    },
+    {
+      "Name": "IS_NOT_NULL",
+      "Value": 3
+    }
+  ],
+  "reWASDUI.Views.TargetView": [
+    {
+      "Name": "Keyboard",
+      "Value": 0
+    },
+    {
+      "Name": "Mouse",
+      "Value": 1
+    },
+    {
+      "Name": "Gamepad",
+      "Value": 2
+    },
+    {
+      "Name": "MouseSettings",
+      "Value": 3
+    },
+    {
+      "Name": "VibrationSettings",
+      "Value": 4
+    }
+  ],
+  "CheckDeviceResult": [
+    {
+      "Name": "FailedToConnect",
+      "Value": 0
+    },
+    {
+      "Name": "DeviceNotResponding",
+      "Value": 1
+    },
+    {
+      "Name": "Success",
+      "Value": 2
+    }
+  ],
+  "UpdateResult": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "InstallNow",
+      "Value": 1
+    },
+    {
+      "Name": "InstallLater",
+      "Value": 2
+    },
+    {
+      "Name": "SkipVersion",
+      "Value": 3
+    }
+  ],
+  "reWASDUI.ViewModels.SecondaryWindows.CalibrateGyroscope.PageType": [
+    {
+      "Name": "CalibrateGyroAutoIsOn",
+      "Value": 0
+    },
+    {
+      "Name": "CalibrateGyroStart",
+      "Value": 1
+    },
+    {
+      "Name": "CalibrateGyroProcessing",
+      "Value": 2
+    }
+  ],
+  "reWASDUI.ViewModels.SecondaryWindows.AddExternalDeviceWizard.UsbPortMode": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "OnePort",
+      "Value": 1
+    },
+    {
+      "Name": "TwoPorts",
+      "Value": 2
+    }
+  ],
+  "reWASDUI.ViewModels.SecondaryWindows.AddExternalDeviceWizard.FinishAndWaitUsbClientState": [
+    {
+      "Name": "Initializing",
+      "Value": 0
+    },
+    {
+      "Name": "Waiting",
+      "Value": 1
+    },
+    {
+      "Name": "Finished",
+      "Value": 2
+    }
+  ],
+  "reWASDUI.ViewModels.SecondaryWindows.AddExternalDeviceWizard.PageType": [
+    {
+      "Name": "AdaptersSettings",
+      "Value": 0
+    },
+    {
+      "Name": "DeviceType",
+      "Value": 1
+    },
+    {
+      "Name": "BluetoothSettings",
+      "Value": 2
+    },
+    {
+      "Name": "GimxStage1",
+      "Value": 3
+    },
+    {
+      "Name": "GimxStage2",
+      "Value": 4
+    },
+    {
+      "Name": "GimxStage3",
+      "Value": 5
+    },
+    {
+      "Name": "GimxStage4",
+      "Value": 6
+    },
+    {
+      "Name": "GimxFailsStage",
+      "Value": 7
+    },
+    {
+      "Name": "EspSelectUsbPorts",
+      "Value": 8
+    },
+    {
+      "Name": "EspCheckingBoard",
+      "Value": 9
+    },
+    {
+      "Name": "EspConnectionTypeStage",
+      "Value": 10
+    },
+    {
+      "Name": "EspWiFiSetup",
+      "Value": 11
+    },
+    {
+      "Name": "Esp32S2S3FirmwareSetup",
+      "Value": 12
+    },
+    {
+      "Name": "Esp32FirmwareSetup",
+      "Value": 13
+    },
+    {
+      "Name": "EspFinish",
+      "Value": 14
+    },
+    {
+      "Name": "EspFailsStage",
+      "Value": 15
+    },
+    {
+      "Name": "EspWiFiIssues",
+      "Value": 16
+    },
+    {
+      "Name": "EspLatencySpeed",
+      "Value": 17
+    },
+    {
+      "Name": "ToolDownloader",
+      "Value": 18
+    },
+    {
+      "Name": "AddExternalClient",
+      "Value": 19
+    },
+    {
+      "Name": "AddOtherBTClient",
+      "Value": 20
+    },
+    {
+      "Name": "AddPS4ConsoleStep1",
+      "Value": 21
+    },
+    {
+      "Name": "AddPS4ConsoleStep2",
+      "Value": 22
+    },
+    {
+      "Name": "AddPS4ConsoleStepConfigRequired",
+      "Value": 23
+    },
+    {
+      "Name": "AddPS4ConsoleStep3",
+      "Value": 24
+    },
+    {
+      "Name": "AddPS4ConsoleStep4",
+      "Value": 25
+    },
+    {
+      "Name": "AddPS4ConsoleErrorPage",
+      "Value": 26
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStep1",
+      "Value": 27
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStep2",
+      "Value": 28
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStep2a",
+      "Value": 29
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStep2b",
+      "Value": 30
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStep3",
+      "Value": 31
+    },
+    {
+      "Name": "AddNintendoSwitchConsoleStepConfigRequired",
+      "Value": 32
+    },
+    {
+      "Name": "AddOtherEsp32BTClient",
+      "Value": 33
+    },
+    {
+      "Name": "AddOtherEsp32BTClientFinish",
+      "Value": 34
+    },
+    {
+      "Name": "SelectAuthGamepad",
+      "Value": 35
+    },
+    {
+      "Name": "FinishAndWaitUSBClient",
+      "Value": 36
+    },
+    {
+      "Name": "None",
+      "Value": 37
+    }
+  ],
+  "reWASDUI.ViewModels.SecondaryWindows.AddExternalDeviceWizard.AddEspDevice.EspConnectionMode": [
+    {
+      "Name": "None",
+      "Value": 0
+    },
+    {
+      "Name": "WiFi",
+      "Value": 1
+    },
+    {
+      "Name": "Usb",
+      "Value": 2
+    }
+  ],
+  "reWASDUI.ViewModels.FirstSteps.PageType": [
+    {
+      "Name": "WelcomePage",
+      "Value": 0
+    },
+    {
+      "Name": "ChooseDeviceTypePage",
+      "Value": 1
+    },
+    {
+      "Name": "IdentifyGamepadPage",
+      "Value": 2
+    },
+    {
+      "Name": "IdentifyKeyboardPage",
+      "Value": 3
+    },
+    {
+      "Name": "IdentifyMousePage",
+      "Value": 4
+    },
+    {
+      "Name": "GroupDevicesPage",
+      "Value": 5
+    },
+    {
+      "Name": "ChooseProfilePage",
+      "Value": 6
+    },
+    {
+      "Name": "FinishPage",
+      "Value": 7
+    },
+    {
+      "Name": "None",
+      "Value": 8
+    }
+  ],
+  "ControllerType": [
+    {
+      "Name": "Gamepad",
+      "Value": 0
+    },
+    {
+      "Name": "KeyboardMouse",
+      "Value": 1
+    }
+  ],
+  "reWASDUI.Controls.XBBindingControls.BindingFrame.BindingFrameViews.BFKeyboardView": [
+    {
+      "Name": "AnalogZones",
+      "Value": 0
+    },
+    {
+      "Name": "Mapping",
+      "Value": 1
+    }
+  ]
+}

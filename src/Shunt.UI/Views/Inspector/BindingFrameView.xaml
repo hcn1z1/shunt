@@ -1,0 +1,92 @@
+<UserControl x:Class="Shunt.UI.Views.Inspector.BindingFrameView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Shunt.UI.Controls">
+    <Border Background="{StaticResource SurfaceLevel1Brush}"
+            BorderBrush="{StaticResource BorderNormalBrush}" BorderThickness="1,0,0,0">
+        <Grid Margin="14,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                <Button DockPanel.Dock="Right" Style="{StaticResource WindowButton}" Width="28" Height="24"
+                        Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="9"
+                        Click="CloseButton_Click" ToolTip="Close inspector"/>
+                <StackPanel>
+                    <TextBlock Text="BINDING FRAME" Style="{StaticResource SectionHeaderText}"/>
+                    <TextBlock x:Name="SelectedButtonTitle" Text="RB" FontSize="17" FontWeight="Bold"
+                               Foreground="{StaticResource AccentCreamBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- Current mapping summary -->
+            <Border Grid.Row="1" Background="{StaticResource SurfaceLevel2Brush}" CornerRadius="4"
+                    Padding="10,7" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock x:Name="CurrentMappingText" Text="No mapping for this control yet."
+                               Style="{StaticResource BodyText}" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="CurrentActivatorText" Text="" Style="{StaticResource TelemetryText}"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Target -->
+            <StackPanel Grid.Row="2">
+                <TextBlock Text="TARGET ACTION (GAMEPAD / KEYBOARD / MOUSE)" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                <controls:KeyPickerBox x:Name="TargetCombo" Margin="0,0,0,12"/>
+            </StackPanel>
+
+            <!-- Activator -->
+            <StackPanel Grid.Row="3">
+                <TextBlock Text="ACTIVATOR" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="ActivatorCombo" Style="{StaticResource DarkComboBox}"
+                          ItemContainerStyle="{StaticResource DarkComboBoxItem}"
+                          DisplayMemberPath="Name" SelectedValuePath="Value" Margin="0,0,0,12"/>
+            </StackPanel>
+
+            <!-- Mode -->
+            <StackPanel Grid.Row="4">
+                <TextBlock Text="MODE" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="ModeCombo" Style="{StaticResource DarkComboBox}"
+                          ItemContainerStyle="{StaticResource DarkComboBoxItem}"
+                          DisplayMemberPath="Name" SelectedValuePath="Value" Margin="0,0,0,10"/>
+            </StackPanel>
+
+            <!-- Layer -->
+            <StackPanel Grid.Row="5">
+                <TextBlock Text="LAYER" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="ShiftLayerCombo" Style="{StaticResource DarkComboBox}"
+                          ItemContainerStyle="{StaticResource DarkComboBoxItem}"
+                          DisplayMemberPath="Name" SelectedValuePath="Id" Margin="0,0,0,10"
+                          SelectionChanged="ShiftLayerCombo_SelectionChanged"/>
+            </StackPanel>
+
+            <!-- Planned capability note -->
+            <TextBlock x:Name="CapabilityNote" Grid.Row="6"
+                       Text="Turbo frequency, toggle latch, mute (unmap native input) and shift-layer jump controls arrive with the engine modifier phase."
+                       Style="{StaticResource BodyText}" FontSize="10" TextWrapping="Wrap"
+                       Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,8,0,6"/>
+
+            <!-- Actions -->
+            <StackPanel Grid.Row="7">
+                <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}" Content="Update mapping"
+                        Click="ApplyButton_Click"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="Open in mappings list"
+                        Click="OpenInListButton_Click" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

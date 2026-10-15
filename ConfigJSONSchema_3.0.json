@@ -1,0 +1,2686 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schema for reWASD profile",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "minimum": 3,
+      "maximum": 3
+    },
+    "appVersion": {
+      "type": "string",
+      "pattern": "^\\d{1,2}\\.\\d{1,2}\\.\\d{1,3}$"
+    },
+    "config": {
+      "$ref": "#/definitions/config"
+    },
+    "devices": {
+      "$ref": "#/definitions/devices"
+    },
+    "radialMenuCircles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/radialMenuCircle"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "radialMenuSectors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/radialMenuSector"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "crosshairs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/crosshair"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "shifts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/shift"
+      },
+      "minItems": 1,
+      "maxItems": 12,
+      "uniqueItems": true
+    },
+    "masks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/mask"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/command"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "mappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/mapping"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "appVersion",
+    "config",
+    "devices"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "shiftId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "groupId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "deviceId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255
+    },
+    "buttonId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 367
+    },
+    "radialMenuCircleId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "radialMenuSectorId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "crosshairId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "params": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/nonEmptyString"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "appName": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "author": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "comment": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "processNames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nonEmptyString"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "minTimeUnit": {
+          "type": "integer",
+          "enum": [
+            1,
+            10
+          ],
+          "default": 10
+        },
+        "led": {
+          "type": "object",
+          "properties": {
+            "default": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/led"
+                }
+              ],
+              "propertyNames": {
+                "pattern": "^(mode|colors|loop)$"
+              }
+            },
+            "shifts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "properties": {
+                      "shiftId": {
+                        "$ref": "#/definitions/shiftId"
+                      }
+                    }
+                  },
+                  {
+                    "$ref": "#/definitions/led"
+                  }
+                ],
+                "required": [
+                  "shiftId",
+                  "mode"
+                ],
+                "propertyNames": {
+                  "pattern": "^(shiftId|mode|colors|loop)$"
+                }
+              },
+              "minItems": 1,
+              "maxItems": 12,
+              "uniqueItems": true
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "appName"
+      ],
+      "additionalProperties": false
+    },
+    "led": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "solid",
+            "shimmer",
+            "heartbeat",
+            "stroboscope",
+            "rainbow",
+            "breath"
+          ]
+        },
+        "colors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/led/color"
+          },
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true
+        },
+        "loop": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "color": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "minItems": 3,
+        "maxItems": 3
+      }
+    },
+    "devices": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hardwareGroup"
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "hardware": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hardwareDevice"
+          },
+          "minItems": 1,
+          "maxItems": 255,
+          "uniqueItems": true
+        },
+        "virtual": {
+          "type": "object",
+          "properties": {
+            "keyboard": {
+              "$ref": "#/definitions/virtualDevice/keyboard"
+            },
+            "mouse": {
+              "$ref": "#/definitions/virtualDevice/mouse"
+            },
+            "gamepads": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/virtualDevice/gamepad"
+              },
+              "minItems": 1,
+              "maxItems": 4,
+              "uniqueItems": true
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "hardware"
+      ],
+      "additionalProperties": false
+    },
+    "hardwareGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/groupId"
+        },
+        "name": {
+          "$ref": "#/definitions/nonEmptyString"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "hardwareDevice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/deviceId"
+        },
+        "groupId": {
+          "$ref": "#/definitions/groupId"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "oneOf": [
+        {
+          "$ref": "#/definitions/hardwareDevice/keyboard"
+        },
+        {
+          "$ref": "#/definitions/hardwareDevice/mouse"
+        },
+        {
+          "$ref": "#/definitions/hardwareDevice/gamepad"
+        }
+      ],
+      "keyboard": {
+        "properties": {
+          "name": {
+            "const": "keyboard"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "multimedia",
+              "chatpad",
+              "sendInput"
+            ]
+          },
+          "keyboard": {
+            "$ref": "#/definitions/virtualDevice/keyboard"
+          },
+          "mouse": {
+            "$ref": "#/definitions/virtualDevice/mouse"
+          },
+          "default": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/definitions/hardwareDevice/keyboard/default"
+              }
+            ],
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(actuationButtons|sticks)$"
+            }
+          },
+          "shifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "allOf": [
+                {
+                  "properties": {
+                    "shiftId": {
+                      "$ref": "#/definitions/shiftId"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/definitions/hardwareDevice/keyboard/default"
+                }
+              ],
+              "required": [
+                "shiftId"
+              ],
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(shiftId|actuationButtons|sticks)$"
+              }
+            },
+            "minItems": 1,
+            "maxItems": 12,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "propertyNames": {
+          "pattern": "^(id|groupId|name|type|keyboard|mouse|default|shifts)$"
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "actuationButtons": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/hardwareDevice/gamepad/actuationButton"
+              },
+              "uniqueItems": true
+            },
+            "sticks": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/stick"
+                  },
+                  {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger"
+                  }
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 4,
+              "uniqueItems": true
+            }
+          }
+        }
+      },
+      "mouse": {
+        "properties": {
+          "name": {
+            "const": "mouse"
+          },
+          "keyboard": {
+            "$ref": "#/definitions/virtualDevice/keyboard"
+          },
+          "mouse": {
+            "$ref": "#/definitions/virtualDevice/mouse"
+          },
+          "default": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/definitions/hardwareDevice/mouse/default"
+              }
+            ],
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(stick|scrolls)$"
+            }
+          },
+          "shifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "allOf": [
+                {
+                  "properties": {
+                    "shiftId": {
+                      "$ref": "#/definitions/shiftId"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/definitions/hardwareDevice/mouse/default"
+                }
+              ],
+              "required": [
+                "shiftId"
+              ],
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(shiftId|stick|scrolls)$"
+              }
+            },
+            "minItems": 1,
+            "maxItems": 12,
+            "uniqueItems": true
+          }
+        },
+        "propertyNames": {
+          "pattern": "^(id|groupId|name|keyboard|mouse|default|shifts)$"
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "stick": {
+              "$ref": "#/definitions/hardwareDevice/mouse/stick"
+            },
+            "scrolls": {
+              "type": "object",
+              "properties": {
+                "scrollUpDelta": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "scrollDownDelta": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "scrollLeftDelta": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "scrollRightDelta": {
+                  "$ref": "#/definitions/positiveInteger"
+                }
+              },
+              "additionalProperties": false,
+              "minProperties": 1
+            }
+          }
+        },
+        "stick": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/hardwareDevice/stick"
+            },
+            {
+              "properties": {
+                "springMode": {
+                  "type": "boolean"
+                },
+                "returnTime": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "snapZone": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "scaleFactorX": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "scaleFactorY": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "smoothing": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "deadzone": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "noiseFilter": {
+                  "$ref": "#/definitions/positiveInteger"
+                }
+              }
+            }
+          ],
+          "propertyNames": {
+            "pattern": "^(sensitivity|mouse|curves|zones|diagonalZones|springMode|returnTime|snapZone|scaleFactorX|scaleFactorY|smoothing|deadzone|noiseFilter)$"
+          }
+        }
+      },
+      "stick": {
+        "type": "object",
+        "properties": {
+          "sensitivity": {
+            "$ref": "#/definitions/hardwareDevice/stick/sensitivity"
+          },
+          "mouse": {
+            "$ref": "#/definitions/virtualDevice/mouse/config"
+          },
+          "curves": {
+            "$ref": "#/definitions/hardwareDevice/stick/curves"
+          },
+          "zones": {
+            "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/zones"
+          },
+          "diagonalZones": {
+            "type": "boolean"
+          },
+          "nativeMode": {
+            "type": "boolean"
+          }
+        },
+        "minProperties": 1,
+        "sensitivity": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "$ref": "#/definitions/hardwareDevice/stick/sensitivity/sensitivityValue"
+            },
+            "y": {
+              "$ref": "#/definitions/hardwareDevice/stick/sensitivity/sensitivityValue"
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false,
+          "sensitivityValue": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32768
+          }
+        },
+        "rotation": {
+          "type": "integer",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "curves": {
+          "type": "object",
+          "properties": {
+            "points": {
+              "type": "object",
+              "properties": {
+                "horizontal": {
+                  "$ref": "#/definitions/hardwareDevice/stick/curves/analogPoints"
+                },
+                "vertical": {
+                  "$ref": "#/definitions/hardwareDevice/stick/curves/analogPoints"
+                },
+                "digital": {
+                  "$ref": "#/definitions/hardwareDevice/stick/curves/digitalPoints"
+                }
+              },
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(horizontal|vertical|digital)$"
+              }
+            }
+          },
+          "required": [
+            "points"
+          ],
+          "additionalProperties": false,
+          "point": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4
+              },
+              "value": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "analogPoints": {
+            "type": "array",
+            "items": [
+              {
+                "type": "object",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/hardwareDevice/stick/curves/point"
+                  },
+                  {
+                    "properties": {
+                      "travel": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                ],
+                "required": [
+                  "id",
+                  "value",
+                  "travel"
+                ],
+                "maxProperties": 3
+              }
+            ],
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true
+          },
+          "digitalPoints": {
+            "type": "array",
+            "items": [
+              {
+                "type": "object",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/hardwareDevice/stick/curves/point"
+                  }
+                ],
+                "required": [
+                  "id",
+                  "value"
+                ],
+                "maxProperties": 2
+              }
+            ],
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true
+          }
+        },
+        "axis": {
+          "type": "string",
+          "enum": [
+            "x",
+            "y"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "mouse",
+            "additional"
+          ]
+        }
+      },
+      "gamepad": {
+        "properties": {
+          "name": {
+            "const": "gamepad"
+          },
+          "keyboard": {
+            "$ref": "#/definitions/virtualDevice/keyboard"
+          },
+          "mouse": {
+            "$ref": "#/definitions/virtualDevice/mouse"
+          },
+          "convertToVirtual": {
+            "type": "boolean"
+          },
+          "applyToPhysicalPriority": {
+            "type": "boolean"
+          },
+          "hidePhysicalGamepad": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/definitions/hardwareDevice/gamepad/default"
+              }
+            ],
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(sticks|triggers|touchpads|analogButtons|vibration|vibrationRumbleMode|vibrationRumbleDelay)$"
+            }
+          },
+          "shifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "allOf": [
+                {
+                  "properties": {
+                    "shiftId": {
+                      "$ref": "#/definitions/shiftId"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/definitions/hardwareDevice/gamepad/default"
+                }
+              ],
+              "required": [
+                "shiftId"
+              ],
+              "minProperties": 2,
+              "propertyNames": {
+                "pattern": "^(shiftId|sticks|triggers|touchpads|analogButtons|vibration|vibrationRumbleMode|vibrationRumbleDelay)$"
+              }
+            },
+            "minItems": 1,
+            "maxItems": 12,
+            "uniqueItems": true
+          }
+        },
+        "propertyNames": {
+          "pattern": "^(id|groupId|name|keyboard|mouse|convertToVirtual|applyToPhysicalPriority|hidePhysicalGamepad|default|shifts)$"
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "sticks": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/stick"
+                  },
+                  {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/gyro"
+                  }
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 4,
+              "uniqueItems": true
+            },
+            "triggers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/hardwareDevice/gamepad/trigger"
+              },
+              "minItems": 1,
+              "maxItems": 2,
+              "uniqueItems": true
+            },
+            "touchpads": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/hardwareDevice/gamepad/touchpad"
+              },
+              "minItems": 1,
+              "maxItems": 4,
+              "uniqueItems": true
+            },
+            "analogButtons": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/hardwareDevice/gamepad/analogButton"
+              },
+              "uniqueItems": true
+            },
+            "vibration": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/vibrationSettings"
+            },
+            "vibrationRumbleMode": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "vibrationRumbleDelay": {
+              "$ref": "#/definitions/positiveInteger"
+            }
+          }
+        },
+        "stickAndTrigger": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/name"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "name": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right",
+              "additional",
+              "gyro",
+              "mouse"
+            ]
+          },
+          "zones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "med",
+                    "high"
+                  ]
+                },
+                "x": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "y": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                }
+              },
+              "required": [
+                "name",
+                "x"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 3,
+            "uniqueItems": true
+          }
+        },
+        "stick": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger"
+            },
+            {
+              "$ref": "#/definitions/hardwareDevice/stick"
+            },
+            {
+              "properties": {
+                "rotation": {
+                  "$ref": "#/definitions/hardwareDevice/stick/rotation"
+                }
+              }
+            }
+          ],
+          "minProperties": 2,
+          "propertyNames": {
+            "pattern": "^(name|sensitivity|rotation|mouse|curves|zones|diagonalZones|nativeMode)$"
+          }
+        },
+        "gyro": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "allOf": [
+            {
+              "properties": {
+                "name": {
+                  "const": "gyro"
+                },
+                "tilt": {
+                  "const": true
+                }
+              }
+            },
+            {
+              "$ref": "#/definitions/hardwareDevice/stick"
+            }
+          ],
+          "minProperties": 2,
+          "propertyNames": {
+            "pattern": "^(name|tilt|sensitivity|mouse|curves|zones)$"
+          }
+        },
+        "trigger": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger"
+            },
+            {
+              "properties": {
+                "affectHardware": {
+                  "const": true
+                },
+                "highZoneMax": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 32768
+                },
+                "zones": {
+                  "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/zones"
+                },
+                "adaptiveDescription": {
+                  "$ref": "#/definitions/nonEmptyString"
+                },
+                "adaptiveMode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "adaptiveStartResistance": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "adaptiveEndResistance": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "adaptiveForce": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "adaptiveStrength": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "adaptiveFrequency": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              }
+            }
+          ],
+          "minProperties": 2,
+          "propertyNames": {
+            "pattern": "^(name|affectHardware|highZoneMax|zones|adaptiveDescription|adaptiveMode|adaptiveStartResistance|adaptiveEndResistance|adaptiveForce|adaptiveStrength|adaptiveFrequency)$"
+          }
+        },
+        "analogButton": {
+          "type": "object",
+          "properties": {
+            "buttonId": {
+              "$ref": "#/definitions/buttonId"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "zones": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/zones"
+            }
+          },
+          "required": [
+            "buttonId",
+            "zones"
+          ],
+          "propertyNames": {
+            "pattern": "^(buttonId|zones|description)$"
+          }
+        },
+        "touchpad": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "mode": {
+              "type": "string",
+              "enum": [
+                "analog",
+                "digital"
+              ]
+            },
+            "diagonalZones": {
+              "type": "boolean"
+            },
+            "zoneClickRequired": {
+              "type": "boolean"
+            },
+            "deadzone": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "springMode": {
+              "type": "boolean"
+            },
+            "curves": {
+              "$ref": "#/definitions/hardwareDevice/stick/curves"
+            },
+            "zones": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/zones"
+            },
+            "sensitivity": {
+              "$ref": "#/definitions/hardwareDevice/stick/sensitivity"
+            },
+            "rotation": {
+              "$ref": "#/definitions/hardwareDevice/stick/rotation"
+            },
+            "scaleFactorX": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "scaleFactorY": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "trackballFriction": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "mouse": {
+              "type": "object",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/virtualDevice/mouse/config"
+                }
+              ],
+              "propertyNames": {
+                "pattern": "^(sensitivity|sensitivityY|smoothing|flickSensitivity|flickDuration|flickThreshold|flickSmoothing)$"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "mode"
+          ],
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "digital"
+              }
+            }
+          },
+          "then": {
+            "propertyNames": {
+              "pattern": "^(id|mode|diagonalZones|zoneClickRequired|deadzone|sensitivity|rotation)$"
+            }
+          },
+          "else": {
+            "propertyNames": {
+              "pattern": "^(id|mode|deadzone|springMode|curves|zones|sensitivity|rotation|scaleFactorX|scaleFactorY|mouse|trackballFriction)$"
+            }
+          }
+        },
+        "vibrationSettings": {
+          "type": "array",
+          "items": {
+            "patternProperties": {
+              "^(motor|trigger)$": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/name"
+                  },
+                  "amplitude": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "turnedOff": {
+                    "type": "boolean"
+                  },
+                  "insteadMotorLeft": {
+                    "type": "boolean"
+                  },
+                  "insteadMotorRight": {
+                    "type": "boolean"
+                  },
+                  "insteadTriggerLeft": {
+                    "type": "boolean"
+                  },
+                  "insteadTriggerRight": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "minProperties": 2,
+                "additionalProperties": false
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "actuationSettings": {
+          "type": "object",
+          "properties": {
+            "actuationState": {
+              "type": "boolean"
+            },
+            "actuationPoint": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "rapidTriggerState": {
+              "type": "boolean"
+            },
+            "rapidTriggerSensPress": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "rapidTriggerSensRelease": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            }
+          },
+          "propertyNames": {
+            "pattern": "^(actuationState|actuationPoint|rapidTriggerState|rapidTriggerSensPress|rapidTriggerSensRelease)$"
+          }
+        },
+        "actuationButton": {
+          "type": "object",
+          "properties": {
+            "buttonId": {
+              "$ref": "#/definitions/buttonId"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "actuation": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/actuationSettings"
+            },
+            "zones": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/zones"
+            },
+            "highZoneMax": {
+              "$ref": "#/definitions/positiveInteger"
+            }
+          },
+          "required": [
+            "buttonId"
+          ],
+          "propertyNames": {
+            "pattern": "^(buttonId|actuation|zones|highZoneMax|description)$"
+          }
+        }
+      }
+    },
+    "virtualDevice": {
+      "keyboard": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/definitions/virtualDevice/keyboard/config"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "additionalProperties": false,
+        "config": {
+          "type": "object",
+          "properties": {
+            "repeatMode": {
+              "type": "string",
+              "enum": [
+                "random",
+                "fixed"
+              ]
+            },
+            "repeatValue": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "minProperties": 2,
+          "additionalProperties": false
+        }
+      },
+      "mouse": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/definitions/virtualDevice/mouse/config"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "additionalProperties": false,
+        "config": {
+          "type": "object",
+          "properties": {
+            "sensitivity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "sensitivityY": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "smoothing": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 32
+            },
+            "deflection": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "acceleration": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64
+            },
+            "wheelDeflection": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 16
+            },
+            "flickSensitivity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2000
+            },
+            "flickDuration": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1500
+            },
+            "flickThreshold": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 32768
+            },
+            "flickSmoothing": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 32
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      },
+      "gamepad": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/deviceId"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "360",
+              "ds4",
+              "xboxonebt",
+              "nintendoswitchpro",
+              "ds3",
+              "keyboardandmouse"
+            ]
+          },
+          "external": {
+            "type": "boolean"
+          },
+          "udp": {
+            "type": "boolean"
+          },
+          "virtualUsbHub": {
+            "type": "boolean"
+          },
+          "performance": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "high",
+              "ultra"
+            ]
+          },
+          "default": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/definitions/virtualDevice/gamepad/default"
+              }
+            ],
+            "required": [
+              "sticks"
+            ]
+          },
+          "shifts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "allOf": [
+                {
+                  "properties": {
+                    "shiftId": {
+                      "$ref": "#/definitions/shiftId"
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/definitions/virtualDevice/gamepad/default"
+                }
+              ],
+              "required": [
+                "shiftId",
+                "sticks"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 12,
+            "uniqueItems": true
+          }
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "sticks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/virtualDevice/gamepad/stick"
+              },
+              "minItems": 1,
+              "maxItems": 2,
+              "uniqueItems": true
+            }
+          }
+        },
+        "stick": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/name"
+            },
+            "initialDeflection": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "initialDeflectionY": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "maxDeflection": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "maxDeflectionY": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "initialSpeed": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "initialSpeedY": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "acceleration": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "accelerationY": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "multiplierX": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "multiplierY": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "shakingDuration": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "shakingAmplitude": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "flashDeadzone": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "deadzone": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            },
+            "curves": {
+              "$ref": "#/definitions/hardwareDevice/stick/curves"
+            },
+            "jitter": {
+              "type": "boolean"
+            },
+            "jitterType": {
+              "type": "string",
+              "enum": [
+                "circle",
+                "square",
+                "cross"
+              ]
+            },
+            "jitterDeflectionMin": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "jitterDeflectionMax": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "jitterDelayMin": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "jitterDelayMax": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "jitterOptionalParameter": {
+              "$ref": "#/definitions/nonNegativeInteger"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "minProperties": 2,
+          "additionalProperties": false
+        },
+        "required": [
+          "id",
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "set": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "$ref": "#/definitions/deviceId"
+          },
+          "buttonId": {
+            "$ref": "#/definitions/buttonId"
+          },
+          "description": {
+            "$ref": "#/definitions/nonEmptyString"
+          },
+          "extended": {
+            "$ref": "#/definitions/nonNegativeInteger"
+          }
+        },
+        "required": [
+          "deviceId",
+          "buttonId"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "radialMenuSet": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "circleId": {
+            "$ref": "#/definitions/radialMenuCircleId"
+          },
+          "sectorId": {
+            "$ref": "#/definitions/radialMenuSectorId"
+          },
+          "description": {
+            "$ref": "#/definitions/nonEmptyString"
+          }
+        },
+        "required": [
+          "circleId",
+          "sectorId"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true
+    },
+    "crosshairSet": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "crosshairGuid": {
+            "$ref": "#/definitions/nonEmptyString"
+          },
+          "layer": {
+            "$ref": "#/definitions/nonNegativeInteger"
+          },
+          "description": {
+            "$ref": "#/definitions/nonEmptyString"
+          }
+        },
+        "required": [
+          "crosshairGuid",
+          "layer"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true
+    },
+    "shift": {
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/shiftId"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "default",
+            "toggle",
+            "unlock",
+            "radialMenu",
+            "unlockKeyboardOnly",
+            "unlockMouseOnly"
+          ]
+        },
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "set": {
+          "$ref": "#/definitions/set"
+        },
+        "unheritableMasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/positiveInteger"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mask": {
+      "oneOf": [
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "set": {
+              "$ref": "#/definitions/set"
+            }
+          },
+          "required": [
+            "id",
+            "set"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "radialMenuSet": {
+              "$ref": "#/definitions/radialMenuSet"
+            }
+          },
+          "required": [
+            "id",
+            "radialMenuSet"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            },
+            "crosshairSet": {
+              "$ref": "#/definitions/crosshairSet"
+            }
+          },
+          "required": [
+            "id",
+            "crosshairSet"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "command": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/positiveInteger"
+        },
+        "type": {
+          "$ref": "#/definitions/positiveInteger"
+        },
+        "name": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "params": {
+          "$ref": "#/definitions/params"
+        }
+      },
+      "required": [
+        "id",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/mapping/mask"
+        },
+        {
+          "$ref": "#/definitions/mapping/hardware"
+        }
+      ],
+      "mask": {
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "shiftId": {
+                "$ref": "#/definitions/shiftId"
+              },
+              "mask": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/definitions/positiveInteger"
+                  },
+                  "activator": {
+                    "$ref": "#/definitions/mapping/activator"
+                  }
+                },
+                "required": [
+                  "id",
+                  "activator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "mask"
+            ],
+            "additionalProperties": false
+          },
+          "macros": {
+            "$ref": "#/definitions/mapping/macros"
+          },
+          "mouseRegion": {
+            "$ref": "#/definitions/mapping/mouseRegion"
+          },
+          "jumpToLayer": {
+            "$ref": "#/definitions/mapping/jumpToLayer"
+          }
+        },
+        "required": [
+          "condition"
+        ],
+        "if": {
+          "required": [
+            "macros"
+          ]
+        },
+        "then": {
+          "propertyNames": {
+            "pattern": "^(description|condition|macros|mouseRegion|jumpToLayer)$"
+          }
+        },
+        "else": {
+          "propertyNames": {
+            "pattern": "^(description|condition|jumpToLayer)$"
+          }
+        },
+        "minProperties": 2
+      },
+      "activator": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "$ref": "#/definitions/params"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "single",
+                  "long",
+                  "double",
+                  "triple",
+                  "start",
+                  "zoneLow",
+                  "zoneMed",
+                  "zoneHigh"
+                ]
+              },
+              "mode": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/mapping/activator/baseModes"
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "hold_until_release",
+                      "turbo"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "release"
+                ]
+              },
+              "mode": {
+                "$ref": "#/definitions/mapping/activator/baseModes"
+              }
+            }
+          }
+        ],
+        "required": [
+          "type",
+          "mode"
+        ],
+        "baseModes": {
+          "type": "string",
+          "enum": [
+            "onetime",
+            "repeat",
+            "toggle"
+          ]
+        }
+      },
+      "macros": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "oneOf": [
+            {
+              "properties": {
+                "keyboard": {
+                  "$ref": "#/definitions/mapping/macros/keyboard"
+                }
+              },
+              "required": [
+                "keyboard"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "mouse": {
+                  "$ref": "#/definitions/mapping/macros/mouse"
+                }
+              },
+              "required": [
+                "mouse"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "gamepad": {
+                  "$ref": "#/definitions/mapping/macros/gamepad"
+                }
+              },
+              "required": [
+                "gamepad"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "command": {
+                  "$ref": "#/definitions/mapping/macros/command"
+                }
+              },
+              "required": [
+                "command"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "rumble": {
+                  "$ref": "#/definitions/mapping/macros/rumble"
+                }
+              },
+              "required": [
+                "rumble"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "pause": {
+                  "$ref": "#/definitions/mapping/macros/pause"
+                }
+              },
+              "required": [
+                "pause"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "break": {
+                  "$ref": "#/definitions/mapping/macros/break"
+                }
+              },
+              "required": [
+                "break"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "minItems": 1,
+        "keyboard": {
+          "type": "object",
+          "properties": {
+            "buttonId": {
+              "$ref": "#/definitions/buttonId"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "down",
+                "single_down",
+                "up"
+              ]
+            },
+            "pulsation": {
+              "type": "boolean"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            }
+          },
+          "required": [
+            "buttonId"
+          ],
+          "additionalProperties": false
+        },
+        "mouse": {
+          "type": "object",
+          "oneOf": [
+            {
+              "properties": {
+                "buttonId": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "up"
+                  ]
+                }
+              },
+              "required": [
+                "buttonId"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "direction": {
+                  "$ref": "#/definitions/mapping/macros/mouse/direction"
+                },
+                "value": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "flick": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "direction"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "properties": {
+                "wheel": {
+                  "$ref": "#/definitions/mapping/macros/mouse/direction"
+                },
+                "value": {
+                  "$ref": "#/definitions/positiveInteger"
+                }
+              },
+              "required": [
+                "wheel"
+              ],
+              "additionalProperties": false
+            }
+          ],
+          "direction": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "left",
+              "right"
+            ]
+          }
+        },
+        "gamepad": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/deviceId"
+            },
+            "description": {
+              "$ref": "#/definitions/nonEmptyString"
+            }
+          },
+          "required": [
+            "id",
+            "buttonId"
+          ],
+          "oneOf": [
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                },
+                "value": {
+                  "$ref": "#/definitions/positiveInteger"
+                },
+                "absolute": {
+                  "const": false
+                },
+                "compensation": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|value|absolute|compensation|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                },
+                "value": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "absolute": {
+                  "const": true
+                }
+              },
+              "required": [
+                "value",
+                "absolute"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|value|absolute|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                },
+                "value": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "absolute": {
+                  "const": true
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "up"
+                  ]
+                }
+              },
+              "required": [
+                "value",
+                "absolute",
+                "action"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|value|absolute|action|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "up"
+                  ]
+                }
+              },
+              "required": [
+                "action"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|action|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                },
+                "pulsation": {
+                  "const": true
+                }
+              },
+              "required": [
+                "pulsation"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|pulsation|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "$ref": "#/definitions/mapping/macros/gamepad/triggerButtonId"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "up"
+                  ]
+                },
+                "value": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                },
+                "absolute": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "value",
+                "absolute"
+              ],
+              "propertyNames": {
+                "pattern": "^(id|buttonId|action|value|absolute|description)$"
+              }
+            },
+            {
+              "properties": {
+                "buttonId": {
+                  "allOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 253
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/definitions/mapping/macros/gamepad/analogButtonId"
+                      }
+                    }
+                  ]
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "down",
+                    "single_down",
+                    "up"
+                  ]
+                },
+                "value": {
+                  "$ref": "#/definitions/nonNegativeInteger"
+                }
+              },
+              "propertyNames": {
+                "pattern": "^(id|buttonId|action|value|description)$"
+              }
+            }
+          ],
+          "analogButtonId": {
+            "type": "integer",
+            "enum": [
+              40,
+              41,
+              42,
+              43,
+              47,
+              48,
+              49,
+              50,
+              59,
+              60,
+              81,
+              82,
+              83,
+              84,
+              85,
+              86,
+              87,
+              88,
+              89,
+              90
+            ]
+          },
+          "triggerButtonId": {
+            "type": "integer",
+            "enum": [
+              51,
+              55
+            ]
+          }
+        },
+        "command": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "#/definitions/positiveInteger"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "rumble": {
+          "type": "object",
+          "properties": {
+            "duration": {
+              "$ref": "#/definitions/positiveInteger"
+            },
+            "amplitude": {
+              "type": "object",
+              "patternProperties": {
+                "^(motor|trigger)$": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(left|right)$": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
+                    }
+                  },
+                  "minProperties": 1,
+                  "additionalProperties": false
+                }
+              },
+              "minProperties": 1,
+              "additionalProperties": false
+            },
+            "macro": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "pause": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "$ref": "#/definitions/positiveInteger"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        "break": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "mouseRegion": {
+        "type": "object",
+        "patternProperties": {
+          "^(x1|y1)$": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "^(x2|y2)$": {
+            "$ref": "#/definitions/positiveInteger"
+          }
+        },
+        "minProperties": 4,
+        "additionalProperties": false
+      },
+      "jumpToLayer": {
+        "type": "object",
+        "properties": {
+          "layer": {
+            "$ref": "#/definitions/nonNegativeInteger"
+          },
+          "delay": {
+            "$ref": "#/definitions/positiveInteger"
+          },
+          "postpone": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "layer"
+        ],
+        "additionalProperties": false
+      },
+      "hardware": {
+        "oneOf": [
+          {
+            "properties": {
+              "condition": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/mapping/hardware/condition"
+                  },
+                  {
+                    "properties": {
+                      "hardware": {
+                        "type": "object",
+                        "properties": {
+                          "buttonId": {
+                            "$ref": "#/definitions/buttonId"
+                          },
+                          "description": {
+                            "$ref": "#/definitions/nonEmptyString"
+                          }
+                        },
+                        "required": [
+                          "buttonId"
+                        ],
+                        "propertyNames": {
+                          "pattern": "^(deviceId|buttonId|description)$"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "hardware": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/mapping/hardware/unmap"
+                  },
+                  {
+                    "properties": {
+                      "buttonId": {
+                        "$ref": "#/definitions/buttonId"
+                      },
+                      "description": {
+                        "$ref": "#/definitions/nonEmptyString"
+                      }
+                    },
+                    "required": [
+                      "buttonId"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "condition": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/mapping/hardware/condition"
+                  },
+                  {
+                    "properties": {
+                      "hardware": {
+                        "type": "object",
+                        "properties": {
+                          "stick": {
+                            "$ref": "#/definitions/hardwareDevice/stick/name"
+                          },
+                          "axis": {
+                            "$ref": "#/definitions/hardwareDevice/stick/axis"
+                          }
+                        },
+                        "required": [
+                          "stick",
+                          "axis"
+                        ],
+                        "propertyNames": {
+                          "pattern": "^(deviceId|stick|axis)$"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "hardware": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/mapping/hardware/unmap"
+                  },
+                  {
+                    "properties": {
+                      "stick": {
+                        "$ref": "#/definitions/hardwareDevice/stick/name"
+                      },
+                      "axis": {
+                        "$ref": "#/definitions/hardwareDevice/stick/axis"
+                      },
+                      "inverted": {
+                        "const": true
+                      }
+                    },
+                    "required": [
+                      "stick",
+                      "axis"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "condition": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/mapping/hardware/condition"
+                  },
+                  {
+                    "properties": {
+                      "hardware": {
+                        "type": "object",
+                        "properties": {
+                          "trigger": {
+                            "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/name"
+                          }
+                        },
+                        "required": [
+                          "trigger"
+                        ],
+                        "propertyNames": {
+                          "pattern": "^(deviceId|trigger)$"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "hardware": {
+                "type": "object",
+                "properties": {
+                  "trigger": {
+                    "$ref": "#/definitions/hardwareDevice/gamepad/stickAndTrigger/name"
+                  }
+                },
+                "required": [
+                  "trigger"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        ],
+        "required": [
+          "condition",
+          "hardware"
+        ],
+        "propertyNames": {
+          "pattern": "^(description|condition|hardware)$"
+        },
+        "condition": {
+          "type": "object",
+          "properties": {
+            "shiftId": {
+              "$ref": "#/definitions/shiftId"
+            },
+            "hardware": {
+              "type": "object",
+              "properties": {
+                "deviceId": {
+                  "$ref": "#/definitions/deviceId"
+                }
+              },
+              "required": [
+                "deviceId"
+              ]
+            }
+          },
+          "required": [
+            "hardware"
+          ],
+          "additionalProperties": false
+        },
+        "unmap": {
+          "properties": {
+            "unmap": {
+              "const": true
+            }
+          },
+          "required": [
+            "unmap"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "radialMenuIcon": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "user"
+          ]
+        },
+        "resource": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        }
+      },
+      "required": [
+        "type",
+        "resource"
+      ]
+    },
+    "radialMenuSector": {
+      "type": "object",
+      "properties": {
+        "parentCircleId": {
+          "$ref": "#/definitions/radialMenuCircleId"
+        },
+        "id": {
+          "$ref": "#/definitions/radialMenuSectorId"
+        },
+        "childCircleId": {
+          "$ref": "#/definitions/radialMenuCircleId"
+        },
+        "icon": {
+          "$ref": "#/definitions/radialMenuIcon"
+        },
+        "color": {
+          "$ref": "#/definitions/led/color"
+        },
+        "description": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "isCloseOnApply": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "parentCircleId"
+      ],
+      "additionalProperties": false
+    },
+    "radialMenuCircle": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/radialMenuCircleId"
+        },
+        "parentSectorId": {
+          "$ref": "#/definitions/radialMenuSectorId"
+        },
+        "sectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/positiveInteger"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "isTintedBackground": {
+          "type": "boolean"
+        },
+        "tintBackground": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        },
+        "monitor": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "scale": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        },
+        "isDelayBeforeOpening": {
+          "type": "boolean"
+        },
+        "delayBeforeOpening": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        },
+        "delayControlsReleaseInfinity": {
+          "type": "boolean"
+        },
+        "delayControlsReleaseTimeout": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        },
+        "horizontalAlignment": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "verticalAlignment": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "horizontalOffset": {
+          "type": "integer"
+        },
+        "verticalOffset": {
+          "type": "integer"
+        },
+        "isAnimationAllowed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "sectors"
+      ],
+      "additionalProperties": false
+    },
+    "crosshair": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/crosshairId"
+        },
+        "guid": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "name": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "crosshairType": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "color": {
+          "$ref": "#/definitions/led/color"
+        },
+        "opacity": {
+          "type": "integer"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "thickness": {
+          "type": "integer"
+        },
+        "edgingThickness": {
+          "type": "integer"
+        },
+        "edgingColor": {
+          "$ref": "#/definitions/led/color"
+        },
+        "horizontalDelta": {
+          "type": "integer"
+        },
+        "verticalDelta": {
+          "type": "integer"
+        },
+        "useCrosshair": {
+          "type": "boolean"
+        },
+        "useMagnifier": {
+          "type": "boolean"
+        },
+        "magnification": {
+          "type": "integer"
+        },
+        "magnificationPrecision": {
+          "type": "integer"
+        },
+        "magnificationSizePercents": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "guid"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
