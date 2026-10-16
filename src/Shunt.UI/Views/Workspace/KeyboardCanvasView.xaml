@@ -1,0 +1,31 @@
+<UserControl x:Class="Shunt.UI.Views.Workspace.KeyboardCanvasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Keyboard canvas toolbar -->
+        <Border Grid.Row="0" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <TextBlock Text="QWERTY CANVAS" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,10,0"/>
+                    <TextBlock Text="Click a keycap to bind it · WASD cluster synthesizes the left stick"
+                               FontSize="11" VerticalAlignment="Center"
+                               Foreground="{StaticResource TextMutedBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Standard 1200 x 750 stage; keyboard geometry is centered in a 1000 x 360 footprint. -->
+        <Border Grid.Row="1" Background="{StaticResource CanvasBackgroundBrush}">
+            <Viewbox Stretch="Uniform" Margin="8">
+                <Canvas x:Name="StageCanvas" Width="1200" Height="750" ClipToBounds="True"/>
+            </Viewbox>
+        </Border>
+    </Grid>
+</UserControl>

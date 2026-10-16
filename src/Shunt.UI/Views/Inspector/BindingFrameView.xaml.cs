@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Collections;
+using Shunt.Core.Scancodes;
 
 namespace Shunt.UI.Views.Inspector;
 
@@ -9,6 +11,7 @@ public partial class BindingFrameView : UserControl
     public event EventHandler? OpenInListRequested;
     public event EventHandler? CloseRequested;
     public event EventHandler<int>? LayerSelectionChanged;
+    public event Action<MappingChoice>? ChordMappingRequested;
 
     private bool _updatingSelection;
 
@@ -18,6 +21,8 @@ public partial class BindingFrameView : UserControl
     }
 
     public string SelectedButtonLabel => SelectedButtonTitle.Text;
+
+    public void SetChordPartners(IEnumerable partners) => ChordPartnerCombo.ItemsSource = partners;
 
     /// <summary>Choice option carrying a display name and an optional value string.</summary>
     public sealed record Choice(string Name, string? Value = null);
@@ -104,6 +109,12 @@ public partial class BindingFrameView : UserControl
     }
 
     private void ApplyButton_Click(object sender, RoutedEventArgs e) => ApplyRequested?.Invoke(this, e);
+
+    private void AddChordButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (ChordPartnerCombo.SelectedItem is MappingChoice partner)
+            ChordMappingRequested?.Invoke(partner);
+    }
 
     private void OpenInListButton_Click(object sender, RoutedEventArgs e) => OpenInListRequested?.Invoke(this, e);
 

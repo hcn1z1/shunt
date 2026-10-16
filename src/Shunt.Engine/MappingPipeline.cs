@@ -22,7 +22,9 @@ public class MappingExecutionContext
     public bool UseSquareStick { get; set; } = false;
     public ZoneThresholds TriggerZones { get; set; } = new(0.35f, 0.75f);
     public ZoneThresholds StickZones { get; set; } = new(0.35f, 0.75f);
+    public MouseZoneConfig? MouseZones { get; set; }
     public List<ResolvedMappingRule> Rules { get; set; } = [];
+    public ChordStateMachine ChordStateMachine { get; } = new();
     internal Dictionary<ResolvedMappingRule, ActivatorState> ActivatorStates { get; } = new();
     public MacroEngine MacroEngine { get; } = new();
     public GyroscopeSettings GyroSettings { get; set; } = new();
@@ -70,6 +72,9 @@ public class MappingPipeline
     public string? LastKeyboardRule { get; private set; }
     public bool? LastKeyboardSendSucceeded { get; private set; }
     public int? LastKeyboardSendErrorCode { get; private set; }
+    public MouseZoneResult? LastMouseZone { get; private set; }
+    public event Action<MouseZoneResult>? EdgeZoneActionTriggered;
+    private string? _lastEdgeAction;
 
     public MappingPipeline(MappingExecutionContext context)
     {
@@ -93,6 +98,20 @@ public class MappingPipeline
         // 1. Apply deadzones and stick transforms
         var processedLeftStick = StickTransform.ApplyDeadzone(input.LeftStick, Context.LeftStickDeadzone);
         var processedRightStick = StickTransform.ApplyDeadzone(input.RightStick, Context.RightStickDeadzone);
+
+        if (Context.MouseZones is { } mouseZones)
+        {
+            var evaluation = MouseZoneEvaluator.Evaluate(processedRightStick.X, processedRightStick.Y, mouseZones);
+            LastMouseZone = evaluation;
+            processedRightStick = evaluation.Zone == MouseZone.Deadzone
+                ? StickPosition.Center
+                : new StickPosition(
+                    Math.Clamp(processedRightStick.X * evaluation.SensitivityMultiplier, -1f, 1f),
+                    Math.Clamp(processedRightStick.Y * evaluation.SensitivityMultiplier, -1f, 1f));
+            if (evaluation.IsEdge && evaluation.EdgeAction != _lastEdgeAction)
+                EdgeZoneActionTriggered?.Invoke(evaluation);
+            _lastEdgeAction = evaluation.IsEdge ? evaluation.EdgeAction : null;
+        }
 
         if (Context.UseSquareStick)
         {
@@ -199,6 +218,10 @@ public class MappingPipeline
 
         // 4. Button rules with multi-button chord priority and component suppression
         var now = Stopwatch.GetTimestamp();
+        var chordResolution = Context.ChordStateMachine.Resolve(
+            input.Buttons,
+            Context.Rules.Select(rule => rule.TriggerButtons),
+            (long)(now * 1000d / Stopwatch.Frequency));
 
         // 3. Resolve shift layer inheritance hierarchy (ActiveShiftId -> parents -> BaseShiftId -> 0)
         var shiftHierarchy = new List<int> { Context.ActiveShiftId };
@@ -245,10 +268,13 @@ public class MappingPipeline
                 continue;
             }
 
-            var pressed = input.HasButton(rule.TriggerButtons);
+            var isChord = BitOperations.PopCount((ulong)rule.TriggerButtons) > 1;
+            var pressed = isChord
+                ? (chordResolution.ActiveChordButtons & rule.TriggerButtons) == rule.TriggerButtons
+                : (chordResolution.FilteredButtons & rule.TriggerButtons) == rule.TriggerButtons;
 
             // If a chord (2+ buttons) is actively pressed, suppress its component buttons from single rules
-            if (pressed && BitOperations.PopCount((ulong)rule.TriggerButtons) > 1)
+            if (pressed && isChord)
             {
                 suppressedButtons |= rule.TriggerButtons;
             }
@@ -315,7 +341,7 @@ public class MappingPipeline
         }
 
         // 4. Pass through any unmapped buttons that are not suppressed by an active chord
-        var unmappedButtons = input.Buttons & ~suppressedButtons & ~mappedTriggerButtons;
+        var unmappedButtons = chordResolution.FilteredButtons & ~suppressedButtons & ~mappedTriggerButtons;
         if (Context.Rules.Count == 0)
         {
             outputButtons |= input.Buttons;

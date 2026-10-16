@@ -15,8 +15,10 @@ using System.Windows.Shell;
 using Microsoft.Win32;
 using Shunt.Core.Models;
 using Shunt.Core.Scancodes;
+using Shunt.Engine;
 using Shunt.UI.Services;
 using Shunt.UI.Views.Inspector;
+using Shunt.UI.Views.Workspace;
 
 namespace Shunt.UI;
 
@@ -41,7 +43,11 @@ public partial class MainWindow : Window
     private ProfileFile? _selectedProfileFile;
     private bool _isDrawerOpen;
     private bool _isAimXpTheme;
+    private RadialMenuOverlay? _radialMenuOverlay;
     private readonly ICollectionView _profileTilesView;
+    private string _currentTarget = "360";
+    private string _canvasMode = "controller";
+    private IReadOnlyList<MappingChoice> _outputTargets = MappingChoiceProvider.GetOutputTargets();
 
     public ObservableCollection<MappingRow> Mappings => _mappings;
     public MappingRow? SelectedMapping { get; set; }
@@ -56,18 +62,23 @@ public partial class MainWindow : Window
         GameTilesControl.ItemsSource = _profileTilesView;
         DeviceSelectorCombo.ItemsSource = _discoveredDevices;
         DeviceSelectorCombo.DisplayMemberPath = "Name";
-        TargetTypeCombo.ItemsSource = OutputTypes;
-        TargetButtonCombo.ItemsSource = OutputTargets;
+        TargetTypeCombo.ItemsSource = TargetTypes;
+        TargetButtonCombo.ItemsSource = _outputTargets;
         InputControlCombo.ItemsSource = InputSources;
         ActivatorCombo.ItemsSource = Activators;
         ModeCombo.ItemsSource = Modes;
         PreviewKeyDown += MainWindow_PreviewKeyDown;
         GamepadCanvas.BindingRequested += GamepadCanvas_BindingRequested;
         GamepadCanvas.ShiftChanged += GamepadCanvas_ShiftChanged;
+        KeyboardCanvas.BindingRequested += ChassisCanvas_BindingRequested;
+        MouseCanvas.BindingRequested += ChassisCanvas_BindingRequested;
+        MouseCanvas.ZoneConfigurationChanged += MouseCanvas_ZoneConfigurationChanged;
         BindingFrame.ApplyRequested += BindingFrame_ApplyRequested;
         BindingFrame.LayerSelectionChanged += BindingFrame_LayerSelectionChanged;
         BindingFrame.OpenInListRequested += BindingFrame_OpenInListRequested;
+        BindingFrame.ChordMappingRequested += BindingFrame_ChordMappingRequested;
         BindingFrame.CloseRequested += (_, _) => ToggleBindingFrame(false);
+        BindingFrame.SetChordPartners(InputSources.Where(source => source.Category == "Gamepad"));
         StageGyro.SettingsChanged += StageGyro_SettingsChanged;
     }
 
@@ -94,6 +105,30 @@ public partial class MainWindow : Window
 
         var buttonName = evt.ButtonName;
         var anchor = CanvasButtonResolver.ResolveAnchor(buttonName);
+
+        // Route keyboard / mouse chassis events to their canvases (plan 11 §4.1, §5).
+        var deviceType = evt.DeviceType?.ToLowerInvariant();
+        if (anchor?.StartsWith("Key") == true || deviceType is "keyboard")
+        {
+            if (anchor is null) return;
+            SetCanvasMode("keyboard");
+            KeyboardCanvas.PulseGlow(anchor);
+            KeyboardCanvas.SelectButton(anchor);
+            ChassisCanvas_BindingRequested(KeyboardCanvas, anchor);
+            SetFooter($"Detection mode (SSE): Detected physical key [{anchor}] press. Inspector opened.");
+            return;
+        }
+        if (MouseZoneAnchors.Contains(anchor ?? string.Empty) || deviceType is "mouse")
+        {
+            var mouseAnchor = anchor ?? buttonName;
+            if (!MouseZoneAnchors.Contains(mouseAnchor)) return;
+            SetCanvasMode("mouse");
+            MouseCanvas.PulseGlow(mouseAnchor);
+            MouseCanvas.SelectButton(mouseAnchor);
+            ChassisCanvas_BindingRequested(MouseCanvas, mouseAnchor);
+            SetFooter($"Detection mode (SSE): Detected physical mouse [{mouseAnchor}] input. Inspector opened.");
+            return;
+        }
 
         if (anchor != null)
         {
@@ -185,8 +220,66 @@ public partial class MainWindow : Window
             : $"Editing {match.Source} on Layer {activeShiftId} in the binding frame inspector.");
     }
 
-    private void ToggleBindingFrame(bool open)
+    // ----------------------- Multi-chassis canvas (plan 11 §2, §4-5) -----------------------
+
+    private void SetCanvasMode(string mode)
     {
+        _canvasMode = mode;
+        GamepadCanvas.Visibility = mode == "controller" ? Visibility.Visible : Visibility.Collapsed;
+        KeyboardCanvas.Visibility = mode == "keyboard" ? Visibility.Visible : Visibility.Collapsed;
+        MouseCanvas.Visibility = mode == "mouse" ? Visibility.Visible : Visibility.Collapsed;
+        if (mode == "keyboard")
+        {
+            KeyboardCanvas.SetMappings(_mappings.Select(row => (row.Source, row.Target)));
+        }
+        else if (mode == "mouse")
+        {
+            MouseCanvas.SetMappings(_mappings.Select(row => (row.Source, row.Target)));
+        }
+    }
+
+    /// <summary>Shared binding-request flow for the keyboard and mouse canvases.</summary>
+    private void ChassisCanvas_BindingRequested(object? sender, string anchor)
+    {
+        var aliases = CanvasButtonResolver.GetAliases(anchor);
+        var match = _mappings.FirstOrDefault(row =>
+            aliases.Any(alias => row.Source.Contains(alias, StringComparison.OrdinalIgnoreCase)));
+
+        if (match is not null)
+        {
+            SelectedMapping = match;
+            MappingsGrid.SelectedItem = match;
+            SelectedInputText.Text = match.Source;
+            TargetButtonCombo.SelectedItem = _outputTargets.FirstOrDefault(button => button.Id == match.TargetButtonId)
+                ?? _outputTargets.FirstOrDefault(button => button.Name.Equals(match.Target, StringComparison.OrdinalIgnoreCase));
+            ActivatorCombo.SelectedItem = Activators.FirstOrDefault(choice => choice.Value == match.Activator);
+            ModeCombo.SelectedItem = Modes.FirstOrDefault(choice => choice.Value == match.Mode);
+            UpdateMappingButton.IsEnabled = true;
+        }
+        else
+        {
+            SelectedMapping = null;
+            MappingsGrid.SelectedItem = null;
+        }
+
+        var anchorLabel = sender == KeyboardCanvas && KeyboardSources.FirstOrDefault(source => aliases.Contains(source.Name)) is { } keySource
+            ? keySource.Name
+            : aliases.FirstOrDefault() ?? anchor;
+        BindingFrame.Populate(
+            anchorLabel,
+            match is null ? null : (match.Source, match.Target, match.Activator, match.Mode),
+            _outputTargets,
+            [.. Activators.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+            [.. Modes.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+            GetAvailableShiftLayers(),
+            GamepadCanvas.ActiveShiftId);
+        ToggleBindingFrame(true);
+        SetFooter(match is null
+            ? $"No mapping exists for {anchorLabel}. Choose a target output in the inspector to create one."
+            : $"Editing {match.Source} in the binding frame inspector.");
+    }
+
+    private void ToggleBindingFrame(bool open)    {
         try
         {
             if (open)
@@ -237,8 +330,8 @@ public partial class MainWindow : Window
 
         if (SelectedMapping is null)
         {
-            if (_profile is null || GetGamepadInputDeviceId() is not int sourceDeviceId ||
-                GetInspectorSourceChoice() is not { } source)
+            if (_profile is null || GetInspectorSourceChoice() is not { } source ||
+                GetSourceDeviceIdFor(source) is not int sourceDeviceId)
             {
                 SetFooter("This control cannot be added from the inspector. Choose its source in the mappings list.", isError: true);
                 return;
@@ -303,10 +396,29 @@ public partial class MainWindow : Window
         return result;
     }
 
+    private static readonly HashSet<string> MouseZoneAnchors =
+    [
+        "LMB", "RMB", "MMB", "Mouse4", "Mouse5",
+        "WheelUp", "WheelDown", "MWheelLeft", "MWheelRight",
+        "MDeflectUp", "MDeflectDown", "MDeflectLeft", "MDeflectRight"
+    ];
+
     private MappingChoice? GetInspectorSourceChoice()
     {
         var anchor = CanvasButtonResolver.ResolveAnchor(BindingFrame.SelectedButtonLabel);
         if (anchor is null) return null;
+
+        // Keyboard / mouse chassis anchors resolve to their scancode sources (plan 11 §4-5).
+        if (anchor.StartsWith("Key", StringComparison.Ordinal))
+        {
+            var aliases = CanvasButtonResolver.GetAliases(anchor);
+            return KeyboardSources.FirstOrDefault(source => aliases.Contains(source.Name));
+        }
+        if (MouseZoneAnchors.Contains(anchor))
+        {
+            var aliases = CanvasButtonResolver.GetAliases(anchor);
+            return MouseSources.FirstOrDefault(source => aliases.Contains(source.Name));
+        }
 
         var sourceId = anchor switch
         {
@@ -324,6 +436,15 @@ public partial class MainWindow : Window
         return sourceId == 0 ? null : InputSources.FirstOrDefault(source => source.Id == sourceId);
     }
 
+    /// <summary>Hardware device id for a mapping source, following the bundled profile
+    /// convention (gamepad=1, keyboard=11, mouse=23) when the profile declares no device.</summary>
+    private int? GetSourceDeviceIdFor(MappingChoice source) => source.Category switch
+    {
+        "Keyboard" => GetHardwareDeviceId("keyboard") ?? 11,
+        "Mouse" => GetHardwareDeviceId("mouse") ?? 23,
+        _ => GetGamepadInputDeviceId()
+    };
+
     private void BindingFrame_OpenInListRequested(object? sender, EventArgs e)
     {
         ToggleBindingFrame(false);
@@ -338,8 +459,53 @@ public partial class MainWindow : Window
         }
     }
 
+    private void BindingFrame_ChordMappingRequested(MappingChoice partner)
+    {
+        var selection = BindingFrame.ReadSelection();
+        if (_profile is null || GetInspectorSourceChoice() is not { } source ||
+            selection.Target is not MappingChoice target ||
+            GetSourceDeviceIdFor(source) is not int sourceDeviceId ||
+            GetSourceDeviceIdFor(partner) is not int partnerDeviceId)
+        {
+            SetFooter("Choose a base control, chord partner, and target before adding the chord.", isError: true);
+            return;
+        }
+        if (source.Id == partner.Id)
+        {
+            SetFooter("A chord needs a second, different control.", isError: true);
+            return;
+        }
+
+        AddMapping(source, target, sourceDeviceId,
+            Activators.FirstOrDefault(item => item.Value == selection.Activator) ?? Activators[0],
+            Modes.FirstOrDefault(item => item.Value == selection.Mode) ?? Modes[0], selection.ShiftId,
+            partner, partnerDeviceId);
+    }
+
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.R &&
+            (e.KeyboardDevice.Modifiers & (ModifierKeys.Control | ModifierKeys.Alt)) == (ModifierKeys.Control | ModifierKeys.Alt))
+        {
+            ToggleRadialMenuOverlay();
+            e.Handled = true;
+            return;
+        }
+
+        // Live keyboard canvas glow: physical presses illuminate the matching keycap (plan 11 §4.1).
+        if (_canvasMode == "keyboard" && KeyboardCanvasView.KeyMap.TryGetValue(e.Key, out var kbAnchor))
+        {
+            KeyboardCanvas.PulseGlow(kbAnchor, 350);
+            if (_isDetectionModeActive)
+            {
+                KeyboardCanvas.SelectButton(kbAnchor);
+                ChassisCanvas_BindingRequested(KeyboardCanvas, kbAnchor);
+                SetFooter($"Detection mode: Detected physical key [{kbAnchor}] press. Inspector opened.");
+                e.Handled = true;
+                return;
+            }
+        }
+
         // Hardware slot shortcuts Ctrl+1..Ctrl+4.
         if (e.KeyboardDevice.Modifiers != ModifierKeys.Control) return;
         var target = e.Key switch
@@ -353,6 +519,21 @@ public partial class MainWindow : Window
         if (target is null) return;
         target.IsChecked = true;
         e.Handled = true;
+    }
+
+    private void ToggleRadialMenuOverlay()
+    {
+        if (_radialMenuOverlay is { IsVisible: true })
+        {
+            _radialMenuOverlay.Close();
+            _radialMenuOverlay = null;
+            return;
+        }
+
+        _radialMenuOverlay = new RadialMenuOverlay { Owner = this };
+        _radialMenuOverlay.Closed += (_, _) => _radialMenuOverlay = null;
+        _radialMenuOverlay.Show();
+        _radialMenuOverlay.Activate();
     }
 
     private RadioButton? SlotPillById(string content) =>
@@ -491,8 +672,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private static readonly IReadOnlyList<MappingChoice> OutputTargets = MappingChoiceProvider.GetOutputTargets();
+    private IReadOnlyList<MappingChoice> OutputTargets => _outputTargets;
     private static readonly IReadOnlyList<MappingChoice> InputSources = MappingChoiceProvider.GetInputSources();
+    private static readonly IReadOnlyList<MappingChoice> KeyboardSources = MappingChoiceProvider.GetKeyboardInputSources();
+    private static readonly IReadOnlyList<MappingChoice> MouseSources = MappingChoiceProvider.GetMouseInputSources();
+    private static readonly IReadOnlyList<TargetControllerChoice> TargetTypes = MappingChoiceProvider.GetTargetChoices();
 
     private static readonly Choice[] Activators =
     [
@@ -507,21 +691,30 @@ public partial class MainWindow : Window
         new("Toggle", "toggle"), new("Turbo", "turbo")
     ];
 
-    private static readonly Choice[] OutputTypes =
-    [
-        new("Xbox 360", "360"),
-        new("DualShock 4", "ds4"),
-        new("Xbox One", "xone"),
-        new("DualShock 3", "ds3"),
-        new("Switch Pro", "nsw"),
-        new("Keyboard & Mouse", "kbm")
-    ];
-
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         PopulateProfiles();
         if (_profiles.Count > 0)
-            ProfileComboBox.SelectedIndex = 0;
+        {
+            // Default to an Xbox Controller mapping profile (Native Behavior / Gamepad)
+            int IndexOfProfile(string keyword)
+            {
+                for (var i = 0; i < _profiles.Count; i++)
+                {
+                    if (_profiles[i].Name.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                        return i;
+                }
+                return -1;
+            }
+
+            var defaultIdx = IndexOfProfile("Native Behavior.rewasd");
+            if (defaultIdx < 0) defaultIdx = IndexOfProfile("Native");
+            if (defaultIdx < 0) defaultIdx = IndexOfProfile("Gamepad to Keyboard");
+            if (defaultIdx < 0) defaultIdx = IndexOfProfile("Gamepad");
+            if (defaultIdx < 0) defaultIdx = 0;
+
+            ProfileComboBox.SelectedIndex = defaultIdx;
+        }
         else
             CreateNewProfile();
 
@@ -602,7 +795,13 @@ public partial class MainWindow : Window
 
         if (_profile is null)
         {
-            TargetTypeCombo.SelectedItem = null;
+            _currentTarget = "360";
+            TargetTypeCombo.SelectedItem = TargetTypes.FirstOrDefault(output => output.Value == "360");
+            SetCanvasMode("controller");
+            _outputTargets = MappingChoiceProvider.GetOutputTargets(VirtualGamepadType.Xbox360);
+            TargetButtonCombo.ItemsSource = _outputTargets;
+            GamepadCanvas.SetTargetNomenclature("360");
+            MouseCanvas.SetZoneConfiguration(new MouseZoneConfig());
             ShiftLayerCombo.ItemsSource = null;
             ProfileInfoText.Text = "Open a profile to inspect its mappings.";
             MappingCountText.Text = "0 mappings";
@@ -616,8 +815,14 @@ public partial class MainWindow : Window
         ShiftLayerCombo.ItemsSource = GetAvailableShiftLayers();
         ShiftLayerCombo.SelectedValue = GamepadCanvas.ActiveShiftId;
 
-        var target = _profile["devices"]?["virtual"]?["gamepads"]?[0]?["type"]?.GetValue<string>() ?? "Not set";
-        TargetTypeCombo.SelectedItem = OutputTypes.FirstOrDefault(output => output.Value.Equals(target, StringComparison.OrdinalIgnoreCase));
+        var target = _profile["devices"]?["virtual"]?["gamepads"]?[0]?["type"]?.GetValue<string>() ?? "360";
+        _currentTarget = target;
+        TargetTypeCombo.SelectedItem = VirtualTargetCatalog.GetFamilyChoice(target);
+        _outputTargets = MappingChoiceProvider.GetOutputTargets(VirtualTargetCatalog.Parse(target) ?? VirtualGamepadType.Xbox360);
+        TargetButtonCombo.ItemsSource = _outputTargets;
+        GamepadCanvas.SetTargetNomenclature(target);
+        SetCanvasMode(target.Equals("kbm", StringComparison.OrdinalIgnoreCase) ? "keyboard" : "controller");
+        MouseCanvas.SetZoneConfiguration(ReadMouseZoneConfiguration(_profile));
 
         var maskDescriptions = BuildMaskDescriptions(_profile["masks"] as JsonArray);
         var sourceMappings = _profile["mappings"] as JsonArray;
@@ -657,9 +862,9 @@ public partial class MainWindow : Window
         ProfileInfoText.Text = $"{profileName ?? Path.GetFileNameWithoutExtension(_profilePath ?? "New profile")}\nSchema {_profile["schemaVersion"]?.ToString() ?? "unknown"}\n{mappingCount} profile entries";
         SaveProfileButton.IsEnabled = _isDirty;
         ApplyProfileButton.IsEnabled = _engineConnected && _profilePath is not null && !_isDirty;
-        AddMappingButton.IsEnabled = GetGamepadInputDeviceId() is not null;
-        if (_profile is not null && GetGamepadInputDeviceId() is null)
-            MappingHelpText.Text = "This profile has no gamepad input device. Existing outputs can be edited; adding gamepad source controls is unavailable.";
+        AddMappingButton.IsEnabled = GetGamepadInputDeviceId() is not null || GetHardwareDeviceId("keyboard") is not null;
+        if (_profile is not null && AddMappingButton.IsEnabled == false)
+            MappingHelpText.Text = "This profile has no gamepad or keyboard input device. Existing outputs can be edited; adding source controls is unavailable.";
         DirtyStateText.Text = _isDirty ? "Unsaved changes" : "Saved";
         DirtyStateText.Foreground = ThemeBrush(_isDirty ? "StatusWarningBrush" : "StatusSuccessBrush");
 
@@ -698,6 +903,61 @@ public partial class MainWindow : Window
         PushMappingsToCanvas();
     }
 
+    private void MouseCanvas_ZoneConfigurationChanged(MouseZoneConfig config)
+    {
+        if (_refreshingProfileView || _profile is null) return;
+        var shifts = _profile["shifts"] as JsonArray;
+        if (shifts is null)
+        {
+            shifts = new JsonArray();
+            _profile["shifts"] = shifts;
+        }
+        var shift = shifts.OfType<JsonObject>().FirstOrDefault(item => item["id"]?.GetValue<int>() == 1);
+        if (shift is null)
+        {
+            shift = new JsonObject { ["id"] = 1, ["type"] = "default" };
+            shifts.Add(shift);
+        }
+        var mouse = shift["mouse"] as JsonObject;
+        if (mouse is null) shift["mouse"] = mouse = new JsonObject();
+        mouse["zones"] = new JsonArray
+        {
+            new JsonObject { ["name"] = "deadzone", ["radius"] = (int)Math.Round(config.DeadzoneRadius * 32767) },
+            new JsonObject { ["name"] = "low", ["radius"] = (int)Math.Round(config.LowRadius * 32767), ["multiplier"] = config.LowMultiplier },
+            new JsonObject { ["name"] = "med", ["radius"] = (int)Math.Round(config.MediumRadius * 32767), ["multiplier"] = config.MediumMultiplier },
+            new JsonObject { ["name"] = "high", ["radius"] = (int)Math.Round(config.HighRadius * 32767), ["multiplier"] = config.HighMultiplier, ["action"] = config.EdgeAction }
+        };
+        MarkDirty();
+    }
+
+    private static MouseZoneConfig ReadMouseZoneConfiguration(JsonObject profile)
+    {
+        var zones = profile["shifts"]?.AsArray().OfType<JsonObject>()
+            .FirstOrDefault(item => item["id"]?.GetValue<int>() == 1)?["mouse"]?["zones"]?.AsArray();
+        if (zones is null) return new MouseZoneConfig();
+        JsonObject? Find(string name) => zones.OfType<JsonObject>().FirstOrDefault(zone =>
+            string.Equals(zone["name"]?.GetValue<string>(), name, StringComparison.OrdinalIgnoreCase));
+        static float Radius(JsonObject? zone, float fallback) => (float)(zone?["radius"]?.GetValue<double>() is double value
+            ? Math.Clamp(value / 32767d, 0d, 1d) : fallback);
+        static float Multiplier(JsonObject? zone, float fallback) => (float)(zone?["multiplier"]?.GetValue<double>() ?? fallback);
+        var deadzone = Radius(Find("deadzone"), 0.05f);
+        var low = Radius(Find("low"), 0.30f);
+        var medium = Radius(Find("med"), 0.70f);
+        var high = Radius(Find("high"), 0.92f);
+        var edgeAction = Find("high")?["action"]?.GetValue<string>();
+        try
+        {
+            var config = new MouseZoneConfig(deadzone, low, medium, high,
+                Multiplier(Find("low"), 0.5f), Multiplier(Find("med"), 1f), Multiplier(Find("high"), 2.2f), edgeAction);
+            config.Validate();
+            return config;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return new MouseZoneConfig();
+        }
+    }
+
     private void StageGyro_SettingsChanged(object? sender, GyroscopeSettings settings)
     {
         if (_profile is null) return;
@@ -734,32 +994,105 @@ public partial class MainWindow : Window
             return (row.Source, row.Target, row.Activator, shift);
         });
         GamepadCanvas.SetMappings(canvasMappings);
+        KeyboardCanvas.SetMappings(_mappings.Select(row => (row.Source, row.Target)));
+        MouseCanvas.SetMappings(_mappings.Select(row => (row.Source, row.Target)));
     }
 
     private void TargetTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_refreshingProfileView || _profile is null || TargetTypeCombo.SelectedItem is not Choice target) return;
-        var gamepads = _profile["devices"]?["virtual"]?["gamepads"] as JsonArray;
-        if (gamepads is null)
+        if (_refreshingProfileView || _profile is null || TargetTypeCombo.SelectedItem is not TargetControllerChoice target) return;
+        _currentTarget = target.Value;
+
+        // 1. Profile persistence (plan 11 §1.2)
+        if (VirtualTargetCatalog.ApplyTarget(_profile, target.Value))
+            MarkDirty();
+
+        // 2. KeyPicker re-indexing for the new target (plan 11 §1.2)
+        RefreshOutputTargets();
+
+        // 3. Canvas badge labels switch to target nomenclature, chassis follows the target family
+        GamepadCanvas.SetTargetNomenclature(target.Value);
+
+        // The selected family owns the visible canvas: desktop uses the keyboard, gamepad families use their chassis.
+        SetCanvasMode(target.Value == "kbm" ? "keyboard" : "controller");
+
+        // 4. Live engine re-targeting while a remap session is active (plan 11 §1.2 step 4)
+        if (_engineConnected && RemapToggle.IsChecked == true && _profilePath is not null)
         {
-            var virtualDevices = _profile["devices"]?["virtual"] as JsonObject;
-            if (virtualDevices is null)
-            {
-                virtualDevices = new JsonObject();
-                if (_profile["devices"] is not JsonObject devices)
-                {
-                    devices = new JsonObject();
-                    _profile["devices"] = devices;
-                }
-                devices["virtual"] = virtualDevices;
-            }
-            gamepads = new JsonArray();
-            virtualDevices["gamepads"] = gamepads;
+            _ = ApplyConfigToEngineAsync($"Engine re-targeted to {target.Name} while remapping is active.");
         }
 
-        if (gamepads.Count == 0) gamepads.Add(new JsonObject { ["id"] = 1, ["type"] = target.Value });
-        else if (gamepads[0] is JsonObject gamepad) gamepad["type"] = target.Value;
-        MarkDirty();
+        SetFooter($"Virtual target switched to {target.Name}. Output targets and canvas labels updated.");
+    }
+
+    /// <summary>Rebuilds the output target pickers for the currently selected virtual target.</summary>
+    private void RefreshOutputTargets()
+    {
+        var parsed = VirtualTargetCatalog.Parse(_currentTarget) ?? VirtualGamepadType.Xbox360;
+        _outputTargets = MappingChoiceProvider.GetOutputTargets(parsed);
+        TargetButtonCombo.ItemsSource = _outputTargets;
+        if (TargetButtonCombo.SelectedItem is MappingChoice selected &&
+            !_outputTargets.Any(choice => choice.Id == selected.Id && choice.Category == selected.Category))
+        {
+            TargetButtonCombo.SelectedItem = null;
+        }
+
+        // Repopulate an open inspector so its target list reflects the new nomenclature.
+        if (BindingFrame.Visibility == Visibility.Visible && !string.IsNullOrWhiteSpace(BindingFrame.SelectedButtonLabel))
+        {
+            if (SelectedMapping is { } row)
+            {
+                BindingFrame.Populate(
+                    BindingFrame.SelectedButtonLabel,
+                    (row.Source, row.Target, row.Activator, row.Mode),
+                    _outputTargets,
+                    [.. Activators.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+                    [.. Modes.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+                    GetAvailableShiftLayers(),
+                    GamepadCanvas.ActiveShiftId);
+            }
+            else
+            {
+                var match = _mappings.FirstOrDefault(row => row.Source.Contains(BindingFrame.SelectedButtonLabel, StringComparison.OrdinalIgnoreCase));
+                BindingFrame.Populate(
+                    BindingFrame.SelectedButtonLabel,
+                    match is null ? null : (match.Source, match.Target, match.Activator, match.Mode),
+                    _outputTargets,
+                    [.. Activators.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+                    [.. Modes.Select(choice => new BindingFrameView.Choice(choice.Name, choice.Value))],
+                    GetAvailableShiftLayers(),
+                    GamepadCanvas.ActiveShiftId);
+            }
+        }
+    }
+
+    /// <summary>POSTs the current profile to the engine to apply a live target switch.</summary>
+    private async Task ApplyConfigToEngineAsync(string successMessage)
+    {
+        if (!_engineConnected || _profilePath is null) return;
+        if (_isDirty && !await SaveCurrentProfileAsync()) return;
+
+        var deviceId = (DeviceSelectorCombo.SelectedItem as DiscoveredDeviceItem)?.Id;
+        var payload = new
+        {
+            ConfigPath = _profilePath,
+            Path = _profilePath,
+            Slot = 0,
+            ControllerId = string.IsNullOrWhiteSpace(deviceId) ? "all_gamepad" : deviceId
+        };
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync("v2.6/ControllerService/ApplyConfig", payload);
+            if (response.IsSuccessStatusCode)
+            {
+                StopProfileButton.IsEnabled = true;
+                SetFooter(successMessage);
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            SetFooter($"Could not re-apply profile after target switch: {ex.Message}", isError: true);
+        }
     }
 
     private static Dictionary<int, string> BuildMaskDescriptions(JsonArray? masks)
@@ -840,7 +1173,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private static string GetTargetDescription(JsonObject mapping, JsonArray macros, out int? targetId)
+    private string GetTargetDescription(JsonObject mapping, JsonArray macros, out int? targetId)
     {
         targetId = null;
         if (macros.Count == 1 && macros[0] is JsonObject step)
@@ -979,8 +1312,8 @@ public partial class MainWindow : Window
 
     private void AddMappingButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_profile is null || GetGamepadInputDeviceId() is not int sourceDeviceId || InputControlCombo.SelectedItem is not MappingChoice source ||
-            TargetButtonCombo.SelectedItem is not MappingChoice target)
+        if (_profile is null || InputControlCombo.SelectedItem is not MappingChoice source ||
+            TargetButtonCombo.SelectedItem is not MappingChoice target || GetSourceDeviceIdFor(source) is not int sourceDeviceId)
         {
             SetFooter("Choose a source control and a target output before adding a mapping.", isError: true);
             return;
@@ -993,7 +1326,8 @@ public partial class MainWindow : Window
         AddMapping(source, target, sourceDeviceId, activatorChoice, modeChoice, selectedShiftId);
     }
 
-    private void AddMapping(MappingChoice source, MappingChoice target, int sourceDeviceId, Choice activatorChoice, Choice modeChoice, int shiftId = 1)
+    private void AddMapping(MappingChoice source, MappingChoice target, int sourceDeviceId, Choice activatorChoice, Choice modeChoice,
+        int shiftId = 1, MappingChoice? chordPartner = null, int? chordPartnerDeviceId = null)
     {
         if (_profile is null) return;
         var masks = _profile["masks"] as JsonArray;
@@ -1009,18 +1343,15 @@ public partial class MainWindow : Window
         masks.Add(new JsonObject
         {
             ["id"] = nextMaskId,
-            ["set"] = new JsonArray(new JsonObject
-            {
-                ["deviceId"] = sourceDeviceId,
-                ["buttonId"] = source.Id,
-                ["description"] = source.Name
-            })
+            ["set"] = CreateInputMaskSet(source, sourceDeviceId, chordPartner, chordPartnerDeviceId)
         });
 
         if (shiftId <= 0) shiftId = 1;
         var mapping = new JsonObject
         {
-            ["description"] = $"{source.Name} → {target.Name}",
+            ["description"] = chordPartner is null
+                ? $"{source.Name} → {target.Name}"
+                : $"{source.Name} + {chordPartner.Name} → {target.Name}",
             ["condition"] = new JsonObject
             {
                 ["shiftId"] = shiftId,
@@ -1044,13 +1375,25 @@ public partial class MainWindow : Window
         }
         var mappingIndex = profileMappings.Count;
         profileMappings.Add(mapping);
-        var row = new MappingRow(mappingIndex, mapping, source.Name, target.Name, target.Id, $"Layer {shiftId}", activatorChoice.Value, modeChoice.Value);
+        var sourceDescription = chordPartner is null ? source.Name : $"{source.Name} + {chordPartner.Name}";
+        var row = new MappingRow(mappingIndex, mapping, sourceDescription, target.Name, target.Id, $"Layer {shiftId}", activatorChoice.Value, modeChoice.Value);
         _mappings.Add(row);
         MappingsGrid.SelectedItem = row;
         MappingCountText.Text = $"{_mappings.Count} editable / {profileMappings.Count} entries";
         PushMappingsToCanvas();
         MarkDirty();
-        SetFooter($"Added {source.Name} → {target.Name} on Layer {shiftId}. Save the profile to write it to disk.");
+        SetFooter($"Added {sourceDescription} → {target.Name} on Layer {shiftId}. Save the profile to write it to disk.");
+    }
+
+    private static JsonArray CreateInputMaskSet(MappingChoice source, int sourceDeviceId, MappingChoice? partner, int? partnerDeviceId)
+    {
+        var set = new JsonArray
+        {
+            new JsonObject { ["deviceId"] = sourceDeviceId, ["buttonId"] = source.Id, ["description"] = source.Name }
+        };
+        if (partner is not null && partnerDeviceId is int deviceId)
+            set.Add(new JsonObject { ["deviceId"] = deviceId, ["buttonId"] = partner.Id, ["description"] = partner.Name });
+        return set;
     }
 
     private async void NewProfileButton_Click(object sender, RoutedEventArgs e)
@@ -1259,25 +1602,48 @@ public partial class MainWindow : Window
         using var versionJson = JsonDocument.Parse(await versionResponse.Content.ReadAsStringAsync());
         var version = versionJson.RootElement.TryGetProperty("Version", out var versionValue) ? versionValue.GetString() : "connected";
         var isLocalEngine = versionJson.RootElement.TryGetProperty("Engine", out var eng) && string.Equals(eng.GetString(), "Shunt", StringComparison.OrdinalIgnoreCase);
+
+        // The Version endpoint is the connection check. Driver and mapping state are
+        // separate capabilities and must not turn a reachable engine into "offline".
         _engineConnected = true;
         EnsureEngineEventClient();
         EngineStatusText.Text = isLocalEngine ? $"Engine online · Shunt {version}" : $"Engine online · {version}";
         EngineStatusDot.Fill = ThemeBrush("StatusSuccessGlowBrush");
         ApplyProfileButton.IsEnabled = _profilePath is not null;
 
-        using var driverResponse = await _httpClient.GetAsync("v2.6/EngineService/DriverInfo");
-        driverResponse.EnsureSuccessStatusCode();
-        using var driverJson = JsonDocument.Parse(await driverResponse.Content.ReadAsStringAsync());
-        var installed = driverJson.RootElement.TryGetProperty("IsViGEmBusInstalled", out var driver) && driver.GetBoolean();
-        DriverStatusText.Text = installed ? "ViGEmBus detected" : "ViGEmBus not detected · simulation may be active";
-
-        using var stateResponse = await _httpClient.GetAsync("v2.6/ControllerService/RemapState/ui");
-        if (stateResponse.IsSuccessStatusCode)
+        try
         {
-            using var stateJson = JsonDocument.Parse(await stateResponse.Content.ReadAsStringAsync());
-            var running = stateJson.RootElement.TryGetProperty("IsRemaped", out var active) && active.GetBoolean();
-            StopProfileButton.IsEnabled = running;
-            if (running) EngineStatusText.Text += " · profile active";
+            using var driverResponse = await _httpClient.GetAsync("v2.6/EngineService/DriverInfo");
+            driverResponse.EnsureSuccessStatusCode();
+            using var driverJson = JsonDocument.Parse(await driverResponse.Content.ReadAsStringAsync());
+            var installed = driverJson.RootElement.TryGetProperty("IsViGEmBusInstalled", out var driver) && driver.GetBoolean();
+            DriverStatusText.Text = installed ? "ViGEmBus detected" : "ViGEmBus not detected · simulation may be active";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            DriverStatusText.Text = "Driver status unavailable · engine is online";
+        }
+
+        try
+        {
+            using var stateResponse = await _httpClient.GetAsync("v2.6/ControllerService/RemapState/ui");
+            if (stateResponse.IsSuccessStatusCode)
+            {
+                using var stateJson = JsonDocument.Parse(await stateResponse.Content.ReadAsStringAsync());
+                var running = stateJson.RootElement.TryGetProperty("IsRemaped", out var active) && active.GetBoolean();
+                StopProfileButton.IsEnabled = running;
+                EngineStatusText.Text += running ? " · profile active" : " · no profile active";
+            }
+            else
+            {
+                StopProfileButton.IsEnabled = false;
+                EngineStatusText.Text += " · profile status unavailable";
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            StopProfileButton.IsEnabled = false;
+            EngineStatusText.Text += " · profile status unavailable";
         }
         SetFooter(isLocalEngine ? "Connected to Shunt engine." : "Connected to local engine.");
     }
@@ -1425,12 +1791,14 @@ public partial class MainWindow : Window
         RefreshProfileView();
     }
 
-    private int? GetGamepadInputDeviceId()
+    private int? GetGamepadInputDeviceId() => GetHardwareDeviceId("gamepad");
+
+    private int? GetHardwareDeviceId(string deviceName)
     {
         if (_profile?["devices"]?["hardware"] is not JsonArray devices) return null;
         foreach (var device in devices.OfType<JsonObject>())
         {
-            if (!string.Equals(device["name"]?.GetValue<string>(), "gamepad", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(device["name"]?.GetValue<string>(), deviceName, StringComparison.OrdinalIgnoreCase)) continue;
             if (device["id"] is JsonValue id && id.TryGetValue<int>(out var deviceId)) return deviceId;
         }
         return null;

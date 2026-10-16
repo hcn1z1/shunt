@@ -96,17 +96,20 @@ public class AdvancedFeatureTests
 
         var pipeline = new MappingPipeline(context);
 
-        // 1. Only LB is pressed -> should output A
+        // 1. LB is buffered briefly because it can begin the configured chord.
         var outSingleLB = pipeline.Process(new GamepadState { Buttons = GamepadButtons.LeftShoulder });
-        Assert.True(outSingleLB.HasButton(GamepadButtons.A));
+        Assert.False(outSingleLB.HasButton(GamepadButtons.A));
         Assert.False(outSingleLB.HasButton(GamepadButtons.Guide));
 
-        // 2. Only RB is pressed -> should output B
-        var outSingleRB = pipeline.Process(new GamepadState { Buttons = GamepadButtons.RightShoulder });
-        Assert.True(outSingleRB.HasButton(GamepadButtons.B));
-        Assert.False(outSingleRB.HasButton(GamepadButtons.Guide));
+        // 2. If no partner arrives, the held solo action is dispatched after the 50 ms window.
+        Thread.Sleep(60);
+        var outSingleLBAfterWindow = pipeline.Process(new GamepadState { Buttons = GamepadButtons.LeftShoulder });
+        Assert.True(outSingleLBAfterWindow.HasButton(GamepadButtons.A));
+        Assert.False(outSingleLBAfterWindow.HasButton(GamepadButtons.Guide));
 
-        // 3. Both LB and RB held (Chord) -> should output Guide, and suppress A and B!
+        pipeline.Process(new GamepadState { Buttons = GamepadButtons.None });
+
+        // 3. Both buttons arriving together form the chord and suppress component outputs.
         var outChord = pipeline.Process(new GamepadState
         {
             Buttons = GamepadButtons.LeftShoulder | GamepadButtons.RightShoulder

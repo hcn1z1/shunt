@@ -156,23 +156,25 @@
         </Setter>
     </Style>
 
-    <!-- Hardware slot pill (1..4) -->
+    <!-- Hardware slot & mode pill -->
     <Style x:Key="SlotPill" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
         <Setter Property="FontFamily" Value="{StaticResource BrandFontFamily}"/>
         <Setter Property="FontSize" Value="11"/>
-        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Padding" Value="10,0"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" Width="28" Height="22" CornerRadius="11"
+                    <Border x:Name="Bd" MinWidth="28" Height="24" CornerRadius="12"
+                            Padding="{TemplateBinding Padding}"
                             Background="{StaticResource SurfaceLevel2Brush}"
                             BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1">
                         <Grid>
                             <Ellipse x:Name="Dot" Width="4" Height="4" Fill="Transparent"
-                                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,3,0"/>
+                                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,4,0"/>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                                               TextBlock.Foreground="{TemplateBinding Foreground}"/>
                         </Grid>

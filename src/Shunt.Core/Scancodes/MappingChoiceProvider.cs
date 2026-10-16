@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Shunt.Core.Models;
 
 namespace Shunt.Core.Scancodes;
 
@@ -213,6 +214,204 @@ public static class MappingChoiceProvider
         }
 
         // 4. System commands (18 entries as Category="Command")
+        foreach (var cmd in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.RewasdUserCommand))
+        {
+            list.Add(new(cmd.Index, $"Cmd: {cmd.FriendlyName}", cmd.Name, "Command"));
+        }
+
+        return list;
+    }
+
+    /// <summary>Rich virtual target controller choices for the header TargetTypeCombo (plan 11 §1).</summary>
+    public static IReadOnlyList<TargetControllerChoice> GetTargetChoices() => VirtualTargetCatalog.Choices;
+
+    /// <summary>Keyboard input sources (scancode ids) for the QWERTY canvas (plan 11 §4).</summary>
+    public static IReadOnlyList<MappingChoice> GetKeyboardInputSources()
+    {
+        var list = new List<MappingChoice>();
+        foreach (var entry in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.KeyboardStandart))
+        {
+            string displayName = LegacyKeyboardNames.TryGetValue(entry.Index, out var legacy)
+                ? legacy
+                : $"Key: {entry.FriendlyName}";
+            list.Add(new(entry.Index, displayName, entry.Name, "Keyboard"));
+        }
+        foreach (var entry in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.KeyboardConsumer))
+        {
+            string friendly = entry.FriendlyName.Equals("Mute", StringComparison.OrdinalIgnoreCase)
+                ? "Volume Mute"
+                : entry.FriendlyName;
+            list.Add(new(entry.Index, $"Key: {friendly}", entry.Name, "Keyboard"));
+        }
+        return list;
+    }
+
+    /// <summary>Mouse input sources (buttons, wheel, deflection) for the mouse canvas (plan 11 §5).</summary>
+    public static IReadOnlyList<MappingChoice> GetMouseInputSources()
+    {
+        var list = new List<MappingChoice>();
+        var mouseEntries = KeyScanCodeTable.GetCategory(KeyScanCodeCategory.MouseDigital)
+            .Concat(KeyScanCodeTable.GetCategory(KeyScanCodeCategory.MouseAnalog));
+        foreach (var entry in mouseEntries)
+        {
+            string name = entry.FriendlyName switch
+            {
+                "Mouse Left Click" => "Mouse: Left Click",
+                "Mouse Right Click" => "Mouse: Right Click",
+                "Mouse Middle Click" => "Mouse: Middle Click",
+                "Wheel Up" => "Mouse: Wheel Up",
+                "Wheel Down" => "Mouse: Wheel Down",
+                _ => $"Mouse: {entry.FriendlyName}"
+            };
+            list.Add(new(entry.Index, name, entry.Name, "Mouse"));
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Per-button naming by controller family: [Xbox, PlayStation, Nintendo] (plan 11 §1.1 step 2).
+    /// The description keeps the cross-family reference from the unfiltered registry.
+    /// </summary>
+    private sealed record GamepadButtonDef(int Id, string XboxName, string PlayStationName, string NintendoName, string Description, string Category = "Gamepad");
+
+    private static readonly GamepadButtonDef[] GamepadButtons =
+    [
+        new(1, "A", "Cross", "B", "XB, Stadia: A / DS4: Cross / Nintendo: B"),
+        new(2, "B", "Circle", "A", "XB, Stadia: B / DS4: Circle / Nintendo: A"),
+        new(3, "X", "Square", "Y", "XB, Stadia: X / DS4: Square / Nintendo: Y"),
+        new(4, "Y", "Triangle", "X", "XB, Stadia: Y / DS4: Triangle / Nintendo: X"),
+        new(5, "LB", "L1", "L", "XB: LeftShoulder / DS4, Stadia: L1 / Nintendo: L"),
+        new(6, "RB", "R1", "R", "XB: RightShoulder / DS4, Stadia: R1 / Nintendo: R"),
+        new(7, "Back", "Share", "Minus", "XB: View / XB360: Back / DS4: Share / Nintendo: Minus"),
+        new(8, "Start", "Options", "Plus", "XB: Menu / XB360: Start / DS4: Options / Nintendo: Plus"),
+        new(9, "LS", "L3", "LS", "XB, Nintendo: LeftStick / DS4, Stadia: L3"),
+        new(10, "RS", "R3", "RS", "XB, Nintendo: RightStick / DS4, Stadia: R3"),
+        new(11, "Guide", "PS Button", "Home", "XB, Nintendo, Flydigi: Home / DS4: PS"),
+        new(33, "D-pad Up", "D-pad Up", "D-pad Up", "DpadUp"),
+        new(34, "D-pad Down", "D-pad Down", "D-pad Down", "DpadDown"),
+        new(35, "D-pad Left", "D-pad Left", "D-pad Left", "DpadLeft"),
+        new(36, "D-pad Right", "D-pad Right", "D-pad Right", "DpadRight"),
+        new(51, "LT", "L2", "ZL", "BtnLeftTrigger"),
+        new(55, "RT", "R2", "ZR", "BtnRightTrigger")
+    ];
+
+    private static readonly (int Id, string Name, string Description)[] TouchpadButtons =
+    [
+        (37, "Touchpad Click", "Touchpad Click"),
+        (38, "Touchpad Tap", "Touchpad Tap"),
+        (41, "Touchpad Swipe Up", "Touchpad Swipe Up"),
+        (42, "Touchpad Swipe Down", "Touchpad Swipe Down"),
+        (43, "Touchpad Swipe Left", "Touchpad Swipe Left"),
+        (44, "Touchpad Swipe Right", "Touchpad Swipe Right")
+    ];
+
+    private static readonly (int Id, string Name, string Description)[] MotionButtons =
+    [
+        (49, "VGYRO (Virtual Gyro Aim)", "Virtual Gyro Aim"),
+        (45, "Tilt Left (Lean Left)", "Tilt Left"),
+        (46, "Tilt Right (Lean Right)", "Tilt Right"),
+        (47, "Tilt Up (Pitch Up)", "Tilt Up"),
+        (48, "Tilt Down (Pitch Down)", "Tilt Down"),
+        (304, "Gyro Tilt Up", "BTN_GYRO_TILT_UP"),
+        (305, "Gyro Tilt Down", "BTN_GYRO_TILT_DOWN"),
+        (306, "Gyro Tilt Right", "BTN_GYRO_TILT_RIGHT"),
+        (307, "Gyro Tilt Left", "BTN_GYRO_TILT_LEFT"),
+        (308, "Gyro Lean Left", "BTN_GYRO_LEAN_LEFT"),
+        (309, "Gyro Lean Right", "BTN_GYRO_LEAN_RIGHT")
+    ];
+
+    private static readonly (int Id, string Name, string Description)[] PaddleButtons =
+    [
+        (29, "Paddle P1", "XB: LeftUpperPaddle / JoyCon: Left SL"),
+        (30, "Paddle P2", "XB: RightUpperPaddle / JoyCon: Right SR"),
+        (31, "Paddle P3", "XB: LeftLowerPaddle / JoyCon: Left SR"),
+        (32, "Paddle P4", "XB: RightLowerPaddle / JoyCon: Right SL")
+    ];
+
+    /// <summary>
+    /// Returns the output targets available on the given virtual controller (plan 11 §1.1 step 2):
+    /// family-localized gamepad buttons (PlayStation nomenclature on DS4/DS3, Nintendo on Switch Pro),
+    /// touchpad gestures on DS4, motion/gyro on DS4 & Switch Pro, Elite paddles on Xbox One,
+    /// and the full keyboard/mouse/commands set on every target (keyboard & mouse only for kbm).
+    /// </summary>
+    public static IReadOnlyList<MappingChoice> GetOutputTargets(VirtualGamepadType target)
+    {
+        var list = new List<MappingChoice>();
+        var isGamepadTarget = target != VirtualGamepadType.KeyboardAndMouse;
+
+        if (isGamepadTarget)
+        {
+            string Name(GamepadButtonDef def) => target switch
+            {
+                VirtualGamepadType.DualShock4 or VirtualGamepadType.DualShock3 => def.PlayStationName,
+                VirtualGamepadType.SwitchPro => def.NintendoName,
+                _ => def.XboxName
+            };
+
+            foreach (var def in GamepadButtons)
+                list.Add(new(def.Id, Name(def), def.Description, def.Category));
+
+            if (target == VirtualGamepadType.XboxOne)
+            {
+                foreach (var (id, name, description) in PaddleButtons)
+                    list.Add(new(id, name, description, "Paddles"));
+            }
+
+            if (target == VirtualGamepadType.DualShock4)
+            {
+                foreach (var (id, name, description) in TouchpadButtons)
+                    list.Add(new(id, name, description, "Touchpad"));
+            }
+
+            if (target is VirtualGamepadType.DualShock4 or VirtualGamepadType.SwitchPro)
+            {
+                foreach (var (id, name, description) in MotionButtons)
+                    list.Add(new(id, name, description, "Gyro & Motion"));
+            }
+        }
+
+        // Keyboard, mouse and system commands are valid outputs on every virtual target.
+        foreach (var entry in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.KeyboardStandart))
+        {
+            string displayName = LegacyKeyboardNames.TryGetValue(entry.Index, out var legacy)
+                ? legacy
+                : $"Key: {entry.FriendlyName}";
+            list.Add(new(entry.Index, displayName, entry.Name, "Keyboard"));
+        }
+
+        foreach (var entry in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.KeyboardConsumer))
+        {
+            string friendly = entry.FriendlyName.Equals("Mute", StringComparison.OrdinalIgnoreCase)
+                ? "Volume Mute"
+                : entry.FriendlyName;
+            list.Add(new(entry.Index, $"Key: {friendly}", entry.Name, "Keyboard"));
+        }
+
+        var mouseEntries = KeyScanCodeTable.GetCategory(KeyScanCodeCategory.MouseDigital)
+            .Concat(KeyScanCodeTable.GetCategory(KeyScanCodeCategory.MouseAnalog));
+        foreach (var entry in mouseEntries)
+        {
+            string name = entry.FriendlyName switch
+            {
+                "Mouse Left Click" => "Mouse: Left Click",
+                "Mouse Right Click" => "Mouse: Right Click",
+                "Mouse Middle Click" => "Mouse: Middle Click",
+                "Wheel Up" => "Mouse: Wheel Up",
+                "Wheel Down" => "Mouse: Wheel Down",
+                _ => $"Mouse: {entry.FriendlyName}"
+            };
+            string desc = entry.Name switch
+            {
+                "MOUSE_BTN_1" => "Mouse Left",
+                "MOUSE_BTN_2" => "Mouse Right",
+                "MOUSE_BTN_3" => "Mouse Middle",
+                "MOUSE_WHEEL_UP" => "wheel up",
+                "MOUSE_WHEEL_DOWN" => "wheel down",
+                _ => entry.FriendlyName
+            };
+            list.Add(new(entry.Index, name, desc, "Mouse"));
+        }
+
         foreach (var cmd in KeyScanCodeTable.GetCategory(KeyScanCodeCategory.RewasdUserCommand))
         {
             list.Add(new(cmd.Index, $"Cmd: {cmd.FriendlyName}", cmd.Name, "Command"));

@@ -16,15 +16,15 @@
                     <TextBlock Text="LAYER" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"
                                Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
                     <RadioButton x:Name="ShiftMainPill" Style="{StaticResource SlotPill}" GroupName="CanvasShift"
-                                 Content="Main" IsChecked="True" Checked="ShiftPill_Checked" Tag="0" ToolTip="Main layer (Shift 0)"/>
+                                 Content="Main" IsChecked="True" Checked="ShiftPill_Checked" Tag="0" ToolTip="Main layer (Shift 0)" Padding="8,0"/>
                     <RadioButton x:Name="ShiftS1Pill" Style="{StaticResource SlotPill}" GroupName="CanvasShift" Content="S1"
-                                 Checked="ShiftPill_Checked" Tag="1" ToolTip="Shift layer 1"/>
+                                 Checked="ShiftPill_Checked" Tag="1" ToolTip="Shift layer 1" Padding="6,0"/>
                     <RadioButton x:Name="ShiftS2Pill" Style="{StaticResource SlotPill}" GroupName="CanvasShift" Content="S2"
-                                 Checked="ShiftPill_Checked" Tag="2" ToolTip="Shift layer 2"/>
+                                 Checked="ShiftPill_Checked" Tag="2" ToolTip="Shift layer 2" Padding="6,0"/>
                     <RadioButton x:Name="ShiftS3Pill" Style="{StaticResource SlotPill}" GroupName="CanvasShift" Content="S3"
-                                 Checked="ShiftPill_Checked" Tag="3" ToolTip="Shift layer 3"/>
+                                 Checked="ShiftPill_Checked" Tag="3" ToolTip="Shift layer 3" Padding="6,0"/>
                     <RadioButton x:Name="ShiftS4Pill" Style="{StaticResource SlotPill}" GroupName="CanvasShift" Content="S4"
-                                 Checked="ShiftPill_Checked" Tag="4" ToolTip="Shift layer 4"/>
+                                 Checked="ShiftPill_Checked" Tag="4" ToolTip="Shift layer 4" Padding="6,0"/>
 
                     <Border Width="1" Height="16" Background="{StaticResource BorderSubtleBrush}" Margin="12,0,12,0"/>
 
@@ -33,13 +33,16 @@
                                Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
                     <RadioButton x:Name="SubmodeGamepad" Style="{StaticResource SlotPill}" GroupName="CanvasSubmode"
                                  Content="🎮 Gamepad" IsChecked="True" Checked="SubmodePill_Checked" Tag="gamepad"
-                                 ToolTip="Standard Gamepad Buttons (Xbox / PS / Switch)"/>
+                                 ToolTip="Standard Gamepad Buttons (Xbox / PS / Switch)" Padding="10,0"/>
                     <RadioButton x:Name="SubmodeTouchpad" Style="{StaticResource SlotPill}" GroupName="CanvasSubmode"
                                  Content="👆 DS4 Touchpad" Checked="SubmodePill_Checked" Tag="touchpad"
-                                 ToolTip="DualShock 4 Touchpad Gestures: Tap, Click, Swipes (Up/Down/Left/Right)"/>
+                                 ToolTip="DualShock 4 Touchpad Gestures: Tap, Click, Swipes (Up/Down/Left/Right)" Padding="10,0"/>
                     <RadioButton x:Name="SubmodeGyro" Style="{StaticResource SlotPill}" GroupName="CanvasSubmode"
                                  Content="🎯 Motion / Gyro" Checked="SubmodePill_Checked" Tag="gyro"
-                                 ToolTip="Virtual Gyroscope (VGYRO) &amp; Motion Tilts (Left/Right/Up/Down)"/>
+                                 ToolTip="Virtual Gyroscope (VGYRO) &amp; Motion Tilts (Left/Right/Up/Down)" Padding="10,0"/>
+
+                    <Border Width="1" Height="16" Background="{StaticResource BorderSubtleBrush}" Margin="12,0,12,0"/>
+
                 </StackPanel>
 
                 <!-- Right: Toggles -->
@@ -269,7 +272,46 @@
                                      Fill="#59FFFFFF" Stroke="#FFFFFF" StrokeThickness="1.2" IsHitTestVisible="False"/>
                         </Canvas>
 
-                        <!-- ============ DUALSHOCK 4 TOUCHPAD OVERLAY ============ -->
+                    </Canvas>
+
+                    <!-- ============ REAR CHASSIS (ELITE PADDLES & TRIGGER STOPS) ============ -->
+                    <Canvas x:Name="RearGroup" Visibility="Collapsed">
+                        <Canvas Canvas.Left="226" Canvas.Top="58">
+                            <Canvas.RenderTransform>
+                                <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
+                            </Canvas.RenderTransform>
+
+                            <!-- Outer Chassis Silhouette -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="2.0"
+                                  Data="M397.9,89C394.676,82.255,389.127,76.684,382.491,72.098L383,72.2C383.1,72 384.4,65.8 374.5,58.7 364.8,51.7 335.5,38.9 316.9,38.9 312.3,38.9 308.3,41.3 304.2,43.8 298.9,47 292.9,51.1 283.7,51.1L184,51.1C174.8,51.1 168.8,47 163.5,43.8 159.4,41.3 155.4,38.9 150.8,38.9 131.5,38.9 102.6,52 93.2,58.8 83.3,65.9 84.7,72 84.8,72.3L85.361,72.132C78.746,76.711 73.216,82.271 70,89 48.8,143 20.3,215.9 20.3,274.9 20.3,333.9 64.2,340 64.2,340 80.8,337 106.3,294.5 124,274.8 137.5,259.7 150.6,258 156,258 157.6,258 158.6,258 158.6,258L189.5,258 278.5,258 309.3,258C309.3,258 310.2,258 311.9,258 317.3,258 330.4,259.8 343.9,274.8 361.6,294.5 387,337.1 403.7,340.1 403.7,340.1 447.6,333.9 447.6,274.9 447.6,215.9 419.1,142.9 397.9,89z"/>
+
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.2" Opacity="0.8"
+                                  Data="M323.1,53.1C324.2,53.1,324.8,53.3,324.8,53.3L324.9,53.3 325,53.3C325.6,53.4 383.1,60.6 396.8,89.3 417.7,142.7 446.4,215.7 446.4,274.9 446.4,298.7 439,317.3 424.9,328.8 415,336.9 404.9,338.9 403.5,339.1 392.4,336.9 376.6,315.9 362.7,297.3 356.1,288.6 350,280.3 344.4,274.2 330.5,258.7 316.9,257.1 311.7,257.1 310.3,257.1 309.3,257.1 309.1,257.1L278.4,257.1 189.4,257.1 158.6,257.1C158.3,257.1 157.4,257.1 156,257.1 150.8,257.1 137.2,258.7 123.3,274.2 117.8,280.3 111.6,288.6 105.1,297.2 91.2,315.8 75.4,336.8 64.3,339 62.9,338.8 52.9,336.8 42.9,328.7 28.8,317.3 21.4,298.6 21.4,274.9 21.4,215.8 50.1,142.8 71.0,89.4 84.7,60.8 142.2,53.5 142.8,53.4L142.9,53.4 143,53.4C143,53.4 143.6,53.2 144.7,53.2 146.9,53.2 151.4,54.1 156.3,59.9 163.7,68.7 187,93.5 188.1,94.6 188.6,95.2 192.6,100 201,100L210.6,100 257.6,100 267,100C275.4,100 279.4,95.2 279.9,94.6 280.9,93.5 304.3,68.6 311.7,59.8 316.4,53.9 320.9,53.1 323.1,53.1 Z"/>
+
+                            <!-- Elite Rear Paddles P1..P4 -->
+                            <Rectangle x:Name="Btn_P1" Canvas.Left="155" Canvas.Top="220" Width="26" Height="42" RadiusX="12" RadiusY="12"
+                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P1"/>
+                            <TextBlock Canvas.Left="162" Canvas.Top="233" Text="P1" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+
+                            <Rectangle x:Name="Btn_P3" Canvas.Left="188" Canvas.Top="232" Width="22" Height="36" RadiusX="10" RadiusY="10"
+                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P3"/>
+                            <TextBlock Canvas.Left="194" Canvas.Top="244" Text="P3" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+
+                            <Rectangle x:Name="Btn_P2" Canvas.Left="287" Canvas.Top="220" Width="26" Height="42" RadiusX="12" RadiusY="12"
+                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P2"/>
+                            <TextBlock Canvas.Left="294" Canvas.Top="233" Text="P2" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+
+                            <Rectangle x:Name="Btn_P4" Canvas.Left="258" Canvas.Top="232" Width="22" Height="36" RadiusX="10" RadiusY="10"
+                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P4"/>
+                            <TextBlock Canvas.Left="264" Canvas.Top="244" Text="P4" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+
+                            <!-- Rear Title Watermark -->
+                            <TextBlock Canvas.Left="208" Canvas.Top="140" Text="REAR" FontSize="18" FontWeight="Black" Opacity="0.25"
+                                       Foreground="#FFFFFF"/>
+                        </Canvas>
+                    </Canvas>
+
+                            <!-- ============ DUALSHOCK 4 TOUCHPAD OVERLAY ============ -->
                         <Canvas x:Name="TouchpadOverlay" Visibility="Collapsed" Canvas.Left="460" Canvas.Top="140" Width="280" Height="170">
                             <Border Background="#E61A1D24" BorderBrush="#FFFFFF" BorderThickness="1.5" CornerRadius="8"
                                     Width="280" Height="160">
@@ -327,7 +369,7 @@
                             </Border>
                         </Canvas>
 
-                        <!-- ============ MOTION / GYRO OVERLAY ============ -->
+                            <!-- ============ MOTION / GYRO OVERLAY ============ -->
                         <Canvas x:Name="GyroOverlay" Visibility="Collapsed" Canvas.Left="460" Canvas.Top="140" Width="280" Height="170">
                             <Border Background="#E61A1D24" BorderBrush="#FFFFFF" BorderThickness="1.5" CornerRadius="8"
                                     Width="280" Height="160">
@@ -375,42 +417,222 @@
                                 <TextBlock Text="Tilt Right ▶" FontSize="10" FontWeight="SemiBold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </Canvas>
-                    </Canvas>
 
-                    <!-- ============ REAR CHASSIS (ELITE PADDLES & TRIGGER STOPS) ============ -->
-                    <Canvas x:Name="RearGroup" Visibility="Collapsed">
-                        <Canvas Canvas.Left="226" Canvas.Top="58">
+                    <!-- ============ DS4 CHASSIS: AUTHENTIC DUALSHOCK 4 FIGURE ============ -->
+                    <Canvas x:Name="Ds4Group" Visibility="Collapsed">
+                        <!-- Scaled controller vector coordinate system (468x406 scaled 1.6x, centered at 600, 375) -->
+                        <Canvas Canvas.Left="226" Canvas.Top="50">
                             <Canvas.RenderTransform>
                                 <ScaleTransform ScaleX="1.6" ScaleY="1.6"/>
                             </Canvas.RenderTransform>
 
-                            <!-- Outer Chassis Silhouette -->
+                            <!-- Left Trigger (L2) behind L1 -->
+                            <Path x:Name="BtnDS4_LT" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M 87,115.5 C 85,106 89,97 99,93 C 111,89 123,95 127,102 L 129,112 C 120,109 97,110 87,115.5 Z"
+                                  ToolTip="L2 Trigger"/>
+
+                            <!-- Right Trigger (R2) behind R1 -->
+                            <Path x:Name="BtnDS4_RT" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M 381,115.5 C 383,106 379,97 369,93 C 357,89 345,95 341,102 L 339,112 C 348,109 371,110 381,115.5 Z"
+                                  ToolTip="R2 Trigger"/>
+
+                            <!-- Main Outer Chassis Boundary Silhouette (DualShock 4 Body) -->
                             <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="2.0"
-                                  Data="M397.9,89C394.676,82.255,389.127,76.684,382.491,72.098L383,72.2C383.1,72 384.4,65.8 374.5,58.7 364.8,51.7 335.5,38.9 316.9,38.9 312.3,38.9 308.3,41.3 304.2,43.8 298.9,47 292.9,51.1 283.7,51.1L184,51.1C174.8,51.1 168.8,47 163.5,43.8 159.4,41.3 155.4,38.9 150.8,38.9 131.5,38.9 102.6,52 93.2,58.8 83.3,65.9 84.7,72 84.8,72.3L85.361,72.132C78.746,76.711 73.216,82.271 70,89 48.8,143 20.3,215.9 20.3,274.9 20.3,333.9 64.2,340 64.2,340 80.8,337 106.3,294.5 124,274.8 137.5,259.7 150.6,258 156,258 157.6,258 158.6,258 158.6,258L189.5,258 278.5,258 309.3,258C309.3,258 310.2,258 311.9,258 317.3,258 330.4,259.8 343.9,274.8 361.6,294.5 387,337.1 403.7,340.1 403.7,340.1 447.6,333.9 447.6,274.9 447.6,215.9 419.1,142.9 397.9,89z"/>
+                                  Data="M434,256.8C430,225.8 412,162.8 406,149.8 401,139.8 397,137.8 390,123.8 390,123.832 387.942,123.449 384.468,122.916 384.399,121.664 384.183,119.583 383.5,118.9 382.5,117.9 370.5,111.9 360.5,111.9 350.5,111.9 347.5,111.9 347.5,111.9 347.5,111.9 339.5,112.9 334.5,115.9L334.5,120.75C334.334,120.769 334.165,120.78 334,120.8 327,122.8 327,125.8 322,125.8L304,125.8C304,125.8 302,123.9 299,123.9 296,123.9 234,123.9 234,123.9 234,123.9 172,123.9 169,123.9 166,123.9 164,125.9 164,125.9L146,125.9C141,125.9 141,122.9 134,120.9 133.505,120.841 132.999,120.802 132.5,120.75L132.5,115.9C127.5,112.9 119.5,111.9 119.5,111.9 119.5,111.9 116.5,111.9 106.5,111.9 96.5,111.9 84.5,117.9 83.5,118.9 82.775,119.625 82.576,121.921 82.522,123.132 79.665,123.583 78,123.9 78,123.9 71,137.9 67,139.9 62,149.9 56,162.9 38,225.9 34,256.9 30,287.9 30,311.9 30,311.9 30,363.9 61.8,367 69.4,367 70.4,367 71,366.9 71,366.9 95,366.9 106,347.9 112,337.9 118,327.9 134,280.9 134,280.9 136,276.9 141,274.9 141,274.9 141,274.9 152,285.9 169,285.9 186,285.9 198,274.9 198,274.9L270,274.9C270,274.9 282,285.8 299,285.8 316,285.8 327,274.8 327,274.8 327,274.8 332,276.8 334,280.8 334,280.8 350,327.8 356,337.8 362,347.8 373,366.8 397,366.8 397,366.8 397.6,366.9 398.6,366.9 406.2,366.9 438,363.8 438,311.8 438,311.8 438,287.8 434,256.8z"/>
 
-                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.2" Opacity="0.8"
-                                  Data="M323.1,53.1C324.2,53.1,324.8,53.3,324.8,53.3L324.9,53.3 325,53.3C325.6,53.4 383.1,60.6 396.8,89.3 417.7,142.7 446.4,215.7 446.4,274.9 446.4,298.7 439,317.3 424.9,328.8 415,336.9 404.9,338.9 403.5,339.1 392.4,336.9 376.6,315.9 362.7,297.3 356.1,288.6 350,280.3 344.4,274.2 330.5,258.7 316.9,257.1 311.7,257.1 310.3,257.1 309.3,257.1 309.1,257.1L278.4,257.1 189.4,257.1 158.6,257.1C158.3,257.1 157.4,257.1 156,257.1 150.8,257.1 137.2,258.7 123.3,274.2 117.8,280.3 111.6,288.6 105.1,297.2 91.2,315.8 75.4,336.8 64.3,339 62.9,338.8 52.9,336.8 42.9,328.7 28.8,317.3 21.4,298.6 21.4,274.9 21.4,215.8 50.1,142.8 71.0,89.4 84.7,60.8 142.2,53.5 142.8,53.4L142.9,53.4 143,53.4C143,53.4 143.6,53.2 144.7,53.2 146.9,53.2 151.4,54.1 156.3,59.9 163.7,68.7 187,93.5 188.1,94.6 188.6,95.2 192.6,100 201,100L210.6,100 257.6,100 267,100C275.4,100 279.4,95.2 279.9,94.6 280.9,93.5 304.3,68.6 311.7,59.8 316.4,53.9 320.9,53.1 323.1,53.1 Z"/>
+                            <!-- Front Faceplate Ergonomic Contour & Grips -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.2" Opacity="0.7"
+                                  Data="M349.4,121C368,121 386.2,124.2 389.3,124.7 393,132.1 395.9,136.2 398.5,139.8 400.7,142.9 402.8,145.8 405,150.3 411,163.3 428.9,225.7 432.9,257 436.8,287.6 436.9,311.6 436.9,311.9 436.9,333.6 431.4,349.2 420.4,358.1 411.8,365.2 402.2,365.9 398.5,365.9 397.5,365.9 397,365.8 397,365.8L396.9,365.8 396.9,365.8C373.8,365.8,362.9,347.6,357,337.8L356.7,337.3C350.8,327.5,334.9,280.9,334.8,280.5L334.8,280.4 334.8,280.3C332.7,276,327.5,273.9,327.3,273.8L326.7,273.6 326.2,274.1C326.1,274.2 315.3,284.8 298.9,284.8 282.5,284.8 270.7,274.2 270.6,274.1L270.3,273.9 270,273.9 198,273.9 197.6,273.9 197.3,274.2C197.2,274.3 185.4,284.9 169,284.9 152.6,284.9 141.8,274.3 141.7,274.2L141.2,273.7 140.6,274C140.4,274.1,135.2,276.2,133.1,280.5L133.1,280.6 133.1,280.7C132.9,281.2,117.1,327.7,111.2,337.5L110.9,338C105,347.8,94.1,366,71,366L71,366 70.9,366C70.9,366 70.3,366.1 69.4,366.1 65.7,366.1 56.1,365.3 47.5,358.3 36.5,349.2 31,333.7 31,311.9 31,311.7 31,287.6 35,257 39,225.7 56.9,163.3 62.9,150.3 65.2,145.8 67.2,142.9 69.4,139.8 72,136.2 74.9,132.1 78.6,124.7 81.7,124.1 99.9,121 118.5,121 124,121 129.1,121.3 133.7,121.8 136.8,122.7 138.4,123.8 139.8,124.7 141.5,125.8 142.9,126.8 145.9,126.8L163.9,126.8 164.3,126.8 164.6,126.5C164.6,126.5,166.3,124.8,168.9,124.8L233.9,124.8 298.9,124.8C301.4,124.8,303.2,126.4,303.2,126.5L303.5,126.8 303.9,126.8 321.9,126.8C324.8,126.8 326.3,125.8 328,124.7 329.4,123.7 331,122.7 334.1,121.8 338.8,121.3 343.9,121 349.4,121 M349.4,120C344.2,120 339,120.2 334,120.8 327,122.8 327,125.8 322,125.8L304,125.8C304,125.8 302,123.9 299,123.9 296,123.9 234,123.9 234,123.9 234,123.9 172,123.9 169,123.9 166,123.9 164,125.9 164,125.9L146,125.9C141,125.9 141,122.9 134,120.9 129,120.3 123.8,120.1 118.6,120.1 97.9,120.1 78,123.9 78,123.9 71,137.9 67,139.9 62,149.9 56,162.9 38,225.9 34,256.9 30,287.9 30,311.9 30,311.9 30,363.9 61.8,367 69.4,367 70.4,367 71,366.9 71,366.9 95,366.9 106,347.9 112,337.9 118,327.9 134,280.9 134,280.9 136,276.9 141,274.9 141,274.9 141,274.9 152,285.9 169,285.9 186,285.9 198,274.9 198,274.9L270,274.9C270,274.9 282,285.8 299,285.8 316,285.8 327,274.8 327,274.8 327,274.8 332,276.8 334,280.8 334,280.8 350,327.8 356,337.8 362,347.8 373,366.8 397,366.8 397,366.8 397.6,366.9 398.6,366.9 406.2,366.9 438,363.8 438,311.8 438,311.8 438,287.8 434,256.8 430,225.8 412,162.8 406,149.8 401,139.8 397,137.8 390,123.8 390,123.9 370.2,120 349.4,120L349.4,120z"/>
 
-                            <!-- Elite Rear Paddles P1..P4 -->
-                            <Rectangle x:Name="Btn_P1" Canvas.Left="155" Canvas.Top="220" Width="26" Height="42" RadiusX="12" RadiusY="12"
-                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P1"/>
-                            <TextBlock Canvas.Left="162" Canvas.Top="233" Text="P1" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+                            <!-- Left Bumper (L1) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M82.5,123.9C82.5,123.9 82.5,119.9 83.5,118.9 84.5,117.9 96.5,111.9 106.5,111.9 116.5,111.9 119.5,111.9 119.5,111.9 119.5,111.9 127.5,112.9 132.5,115.9L132.5,121.429C132.2,121.029,131.9,121.1,131.5,120.8L131.5,116.5C126.9,114,120.1,113,119.4,112.9L106.5,112.9C97.1,112.9 85.3,118.6 84.2,119.6 83.9,119.9 83.6,121.3 83.5,122.9L83.502,123.33 82.5,123.9z"/>
+                            <Path x:Name="BtnDS4_LB" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M83.3,123.1C83.3,123.1 83.8,120 84.2,119.6 84.9,119 94.7,113.5 105.5,112.9L119.7,112.9C119.7,112.9,126.8,113.8,131.6,116.5L131.6,120.7C131.5,120.7,116.1,118.6,83.3,123.1z"
+                                  ToolTip="L1 Bumper"/>
 
-                            <Rectangle x:Name="Btn_P3" Canvas.Left="188" Canvas.Top="232" Width="22" Height="36" RadiusX="10" RadiusY="10"
-                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P3"/>
-                            <TextBlock Canvas.Left="194" Canvas.Top="244" Text="P3" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+                            <!-- Right Bumper (R1) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M384.5,123.9C384.5,123.9 384.5,119.9 383.5,118.9 382.5,117.9 370.5,111.9 360.5,111.9 350.5,111.9 347.5,111.9 347.5,111.9 347.5,111.9 339.5,112.9 334.5,115.9L334.5,121.465C334.8,121.065,335.1,121.1,335.5,120.8L335.5,116.5C340.1,114,346.9,113,347.6,112.9L360.5,112.9C369.9,112.9 381.7,118.6 382.8,119.6 383.1,119.9 383.4,121.3 383.5,122.9L384.5,123.9z"/>
+                            <Path x:Name="BtnDS4_RB" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M383.4,122.9C383.4,122.9 383.1,120 382.8,119.7 382.1,119.1 372.1,113.6 361.3,113L347.1,113C347.1,113,340,113.9,335.2,116.6L335.4,120.9C335.5,120.8,350.6,118.3,383.4,122.9z"
+                                  ToolTip="R1 Bumper"/>
 
-                            <Rectangle x:Name="Btn_P2" Canvas.Left="287" Canvas.Top="220" Width="26" Height="42" RadiusX="12" RadiusY="12"
-                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P2"/>
-                            <TextBlock Canvas.Left="294" Canvas.Top="233" Text="P2" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+                            <!-- Central Touchpad Contour & Hit Area -->
+                            <Path Fill="#14FFFFFF" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M300.5,137.8L300.5,191.9C300.5,192.2,300.4,199.9,292.5,199.9L174.5,199.9C166.6,199.9,166.5,192.2,166.5,191.9L166.5,137.8 165.5,137.8 165.5,191.9C165.5,191.9 165.5,200.9 174.5,200.9 182.748,200.9 284.252,200.9 292.5,200.9 301.5,200.9 301.5,191.9 301.5,191.9L301.501,137.799 300.501,137.799z"/>
+                            <Line X1="233.5" Y1="148" X2="233.5" Y2="194" Stroke="#44FFFFFF" StrokeThickness="1" IsHitTestVisible="False"/>
+                            <Rectangle x:Name="BtnDS4_TouchClick" Canvas.Left="166.5" Canvas.Top="137.8" Width="134" Height="62"
+                                       RadiusX="6" RadiusY="6" Fill="Transparent" Stroke="Transparent" StrokeThickness="1.5"
+                                       Cursor="Hand" ToolTip="Touchpad Click"/>
+                            <TextBlock Canvas.Left="210" Canvas.Top="186" Text="TOUCHPAD" FontSize="6.5" FontWeight="Bold"
+                                       Foreground="#66FFFFFF" IsHitTestVisible="False"/>
 
-                            <Rectangle x:Name="Btn_P4" Canvas.Left="258" Canvas.Top="232" Width="22" Height="36" RadiusX="10" RadiusY="10"
-                                       Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" Cursor="Hand" ToolTip="Paddle P4"/>
-                            <TextBlock Canvas.Left="264" Canvas.Top="244" Text="P4" FontSize="9" FontWeight="Bold" Foreground="#FFFFFF" IsHitTestVisible="False"/>
+                            <!-- DualShock 4 Lightbar Accent -->
+                            <Border x:Name="Ds4Lightbar" Canvas.Left="204" Canvas.Top="122" Width="60" Height="4"
+                                    CornerRadius="2" Background="#3B82F6" IsHitTestVisible="False">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#3B82F6" BlurRadius="12" ShadowDepth="0" Opacity="0.9"/>
+                                </Border.Effect>
+                            </Border>
+                            <Border Canvas.Left="214" Canvas.Top="140" Width="40" Height="2" CornerRadius="1"
+                                    Background="#3B82F6" Opacity="0.8" IsHitTestVisible="False"/>
 
-                            <!-- Rear Title Watermark -->
-                            <TextBlock Canvas.Left="208" Canvas.Top="140" Text="REAR" FontSize="18" FontWeight="Black" Opacity="0.25"
-                                       Foreground="#FFFFFF"/>
+                            <!-- Share Button -->
+                            <Path x:Name="BtnDS4_View" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M149,135.9C152,135.9,154.5,138.4,154.5,141.4L154.5,150.4C154.5,153.4 152,155.9 149,155.9 146,155.9 143.5,153.4 143.5,150.4L143.5,141.4C143.5,138.4,146,135.9,149,135.9"
+                                  ToolTip="Share Button" Tag="View"/>
+                            <TextBlock Canvas.Left="137" Canvas.Top="126" Text="SHARE" FontSize="6.5" FontWeight="SemiBold"
+                                       Foreground="#88FFFFFF" IsHitTestVisible="False"/>
+
+                            <!-- Options Button -->
+                            <Path x:Name="BtnDS4_Menu" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5"
+                                  Data="M318,135.9C321,135.9,323.5,138.4,323.5,141.4L323.5,150.4C323.5,153.4 321,155.9 318,155.9 315,155.9 312.5,153.4 312.5,150.4L312.5,141.4C312.5,138.4,315,135.9,318,135.9"
+                                  ToolTip="Options Button" Tag="Menu"/>
+                            <TextBlock Canvas.Left="309" Canvas.Top="126" Text="OPTIONS" FontSize="6.5" FontWeight="SemiBold"
+                                       Foreground="#88FFFFFF" IsHitTestVisible="False"/>
+
+                            <!-- ============ D-PAD ============ -->
+                            <Ellipse Canvas.Left="71" Canvas.Top="154" Width="70" Height="70" Stroke="#33FFFFFF" StrokeThickness="1"
+                                     Fill="Transparent" IsHitTestVisible="False"/>
+                            <!-- D-Up -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M112,154.9C110.5,154.9 109.1,154.9 108,154.9 108,154.9 106.6,154.9 104,154.9 102.9,154.9 101.5,154.9 100,154.9 95,154.9 95,159.9 95,159.9L95,170.9C95,170.9 103,179.9 104,180.9 105,181.9 106,181.9 106,181.9 106,181.9 107,181.9 108,180.9 109,179.9 117,170.9 117,170.9L117,159.9C117,159.9,117,154.9,112,154.9L112,154.9z"/>
+                            <Path x:Name="BtnDS4_DUp" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="D-pad Up"
+                                  Data="M112,155.9C115.9,155.9,116,159.5,116,159.9L116,170.5C113.2,173.7 108,179.4 107.3,180.2 106.6,180.9 106,180.9 106,180.9 106,180.9 105.4,180.9 104.7,180.2 103.9,179.4 98.8,173.7 96,170.5L96,159.9C96,159.7,96,155.9,100,155.9L104,155.9 108,155.9 112,155.9"/>
+                            <Path Stroke="#FFFFFF" StrokeThickness="1.2" Fill="Transparent" IsHitTestVisible="False"
+                                  Data="M 102,166 L 106,162 L 110,166"/>
+
+                            <!-- D-Down -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M106,195.9C106,195.9 105,195.9 104,196.9 103,197.9 95,206.9 95,206.9L95,217.9C95,217.9 95,222.9 100,222.9 101.5,222.9 102.9,222.9 104,222.9 106.6,222.9 108,222.9 108,222.9 109.1,222.9 110.5,222.9 112,222.9 117,222.9 117,217.9 117,217.9L117,206.9C117,206.9 109,197.9 108,196.9 107,195.9 106,195.9 106,195.9L106,195.9z"/>
+                            <Path x:Name="BtnDS4_DDown" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="D-pad Down"
+                                  Data="M100,221.9C96.1,221.9,96,218.3,96,217.9L96,207.3C98.8,204.1 104,198.4 104.7,197.6 105.4,196.9 106,196.9 106,196.9 106,196.9 106.6,196.9 107.3,197.6 108.1,198.4 113.2,204.1 116,207.3L116,217.9C116,218.1,116,221.9,112,221.9L108,221.9 104,221.9 100,221.9"/>
+                            <Path Stroke="#FFFFFF" StrokeThickness="1.2" Fill="Transparent" IsHitTestVisible="False"
+                                  Data="M 102,212 L 106,216 L 110,212"/>
+
+                            <!-- D-Left -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M88,177.9L77,177.9C77,177.9 72,177.9 72,182.9 72,184.4 72,185.8 72,186.9 72,186.9 72,188.3 72,190.9 72,192 72,193.4 72,194.9 72,199.9 77,199.9 77,199.9L88,199.9C88,199.9 97,191.9 98,190.9 99,189.9 99,188.9 99,188.9 99,188.9 99,187.9 98,186.9 97,185.9 88,177.9 88,177.9L88,177.9z"/>
+                            <Path x:Name="BtnDS4_DLeft" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="D-pad Left"
+                                  Data="M73,182.9C73,179,76.6,178.9,77,178.9L87.6,178.9C90.8,181.7 96.5,186.9 97.3,187.6 98,188.3 98,188.9 98,188.9 98,188.9 98,189.5 97.3,190.2 96.5,191 90.8,196.1 87.6,198.9L77,198.9C76.8,198.9,73,198.9,73,194.9L73,190.9 73,186.9 73,182.9"/>
+                            <Path Stroke="#FFFFFF" StrokeThickness="1.2" Fill="Transparent" IsHitTestVisible="False"
+                                  Data="M 83,185 L 79,189 L 83,193"/>
+
+                            <!-- D-Right -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M135,177.9L124,177.9C124,177.9 115,185.9 114,186.9 113,187.9 113,188.9 113,188.9 113,188.9 113,189.9 114,190.9 115,191.9 124,199.9 124,199.9L135,199.9C135,199.9 140,199.9 140,194.9 140,193.4 140,192 140,190.9 140,188.3 140,186.9 140,186.9 140,185.8 140,184.4 140,182.9 140,177.9 135,177.9 135,177.9L135,177.9z"/>
+                            <Path x:Name="BtnDS4_DRight" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="D-pad Right"
+                                  Data="M139,194.9C139,198.8,135.4,198.9,135,198.9L124.4,198.9C121.2,196.1 115.5,190.9 114.7,190.2 114,189.5 114,188.9 114,188.9 114,188.9 114,188.3 114.7,187.6 115.5,186.8 121.2,181.7 124.4,178.9L135,178.9C135.2,178.9,139,178.9,139,182.9L139,186.9 139,190.9 139,194.9"/>
+                            <Path Stroke="#FFFFFF" StrokeThickness="1.2" Fill="Transparent" IsHitTestVisible="False"
+                                  Data="M 129,185 L 133,189 L 129,193"/>
+
+                            <!-- ============ FACE BUTTONS: TRIANGLE, CIRCLE, CROSS, SQUARE ============ -->
+                            <Ellipse Canvas.Left="327" Canvas.Top="154" Width="70" Height="70" Stroke="#33FFFFFF" StrokeThickness="1"
+                                     Fill="Transparent" IsHitTestVisible="False"/>
+
+                            <!-- Triangle Button (BtnDS4_Y) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M362,143.9C354.5,143.9 348.5,149.9 348.5,157.4 348.5,164.9 354.5,170.9 362,170.9 369.4,170.9 375.5,164.9 375.5,157.4 375.5,150 369.4,143.9 362,143.9L362,143.9z"/>
+                            <Path x:Name="BtnDS4_Y" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="Triangle Button"
+                                  Data="M362,144.9C368.9,144.9 374.5,150.5 374.5,157.4 374.5,164.3 368.9,169.9 362,169.9 355.1,169.9 349.5,164.3 349.5,157.4 349.5,150.5 355.1,144.9 362,144.9"/>
+                            <Path Stroke="#3DD679" StrokeThickness="1.8" Fill="Transparent" IsHitTestVisible="False"
+                                  Data="M362,150.5 L369.5,162 L354.5,162 Z"/>
+
+                            <!-- Circle Button (BtnDS4_B) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M393,174.9C385.5,174.9 379.5,180.9 379.5,188.4 379.5,195.9 385.5,201.9 393,201.9 400.4,201.9 406.5,195.9 406.5,188.4 406.5,181 400.4,174.9 393,174.9L393,174.9z"/>
+                            <Path x:Name="BtnDS4_B" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="Circle Button"
+                                  Data="M393,175.9C399.9,175.9 405.5,181.5 405.5,188.4 405.5,195.3 399.9,200.9 393,200.9 386.1,200.9 380.5,195.3 380.5,188.4 380.5,181.5 386.1,175.9 393,175.9"/>
+                            <Ellipse Canvas.Left="386.5" Canvas.Top="181.9" Width="13" Height="13" Stroke="#D95763" StrokeThickness="1.8"
+                                     Fill="Transparent" IsHitTestVisible="False"/>
+
+                            <!-- Cross Button (BtnDS4_A) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M362,205.9C354.5,205.9 348.5,211.9 348.5,219.4 348.5,226.9 354.5,232.9 362,232.9 369.4,232.9 375.5,226.9 375.5,219.4 375.5,212 369.4,205.9 362,205.9L362,205.9z"/>
+                            <Path x:Name="BtnDS4_A" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="Cross Button"
+                                  Data="M362,206.9C368.9,206.9 374.5,212.5 374.5,219.4 374.5,226.3 368.9,231.9 362,231.9 355.1,231.9 349.5,226.3 349.5,219.4 349.5,212.5 355.1,206.9 362,206.9"/>
+                            <Path Stroke="#6E9FD4" StrokeThickness="1.8" IsHitTestVisible="False"
+                                  Data="M356.5,213.9 L367.5,224.9 M367.5,213.9 L356.5,224.9"/>
+
+                            <!-- Square Button (BtnDS4_X) -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M331,174.9C323.5,174.9 317.5,180.9 317.5,188.4 317.5,195.9 323.5,201.9 331,201.9 338.4,201.9 344.5,195.9 344.5,188.4 344.5,181 338.4,174.9 331,174.9L331,174.9z"/>
+                            <Path x:Name="BtnDS4_X" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="Square Button"
+                                  Data="M331,175.9C337.9,175.9 343.5,181.5 343.5,188.4 343.5,195.3 337.9,200.9 331,200.9 324.1,200.9 318.5,195.3 318.5,188.4 318.5,181.5 324.1,175.9 331,175.9"/>
+                            <Rectangle Canvas.Left="325" Canvas.Top="182.4" Width="12" Height="12" Stroke="#E183AC" StrokeThickness="1.8"
+                                       Fill="Transparent" IsHitTestVisible="False"/>
+
+                            <!-- ============ LEFT ANALOG THUMBSTICK ============ -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.2" Opacity="0.4"
+                                  Data="M168.6,207.9C148.5,207.9 132.2,224.2 132.2,244.3 132.2,264.4 148.5,280.7 168.6,280.7 188.7,280.7 205,264.4 205,244.3 205,224.3 188.7,207.9 168.6,207.9L168.6,207.9z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.9" Opacity="0.25"
+                                  Data="M168.4,219.5C154.7,219.5 143.6,230.6 143.6,244.3 143.6,258 154.7,269.1 168.4,269.1 182.1,269.1 193.2,258 193.2,244.3 193.3,230.6 182.2,219.5 168.4,219.5L168.4,219.5z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M168.5,219.4C175.5,219.4,181.8,222.3,186.3,226.9L194.5,218.7C194.5,218.7,183.8,207.9,168.6,207.9L168.6,207.9 168.6,207.9C153.4,207.9,142.7,218.7,142.7,218.7L150.8,226.8C155.2,222.3,161.5,219.4,168.5,219.4z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M143.6,244.4C143.6,237.6,146.3,231.4,150.8,226.9L142.7,218.8C142.7,218.8 132.2,229.7 132.2,244.8 132.2,260 143.1,270.4 143.1,270.4L151.2,262.2C146.5,257.7,143.6,251.4,143.6,244.4z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M185.9,262.2C181.4,266.6 175.3,269.3 168.5,269.3 161.7,269.3 155.6,266.6 151.1,262.2L143,270.4C143,270.4,153.2,280.8,168.4,280.8L168.4,280.8 168.4,280.8C183.6,280.8,193.9,270.4,193.9,270.4L185.9,262.2z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M205,244.7C205,229.5,194.4,218.7,194.4,218.7L186.2,226.9C190.6,231.4 193.3,237.6 193.3,244.3 193.3,251.3 190.4,257.6 185.8,262.1L193.9,270.3C194,270.4,205,260,205,244.7L205,244.7 205,244.7z"/>
+                            <!-- Stick Cap Dish (BtnDS4_LS) -->
+                            <Path x:Name="BtnDS4_LS" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.8"
+                                  Data="M168.6,227.8C159.5,227.8 152.1,235.2 152.1,244.3 152.1,253.4 159.5,260.8 168.6,260.8 177.7,260.8 185.1,253.4 185.1,244.3 185.1,235.2 177.7,227.8 168.6,227.8L168.6,227.8z"
+                                  ToolTip="Left Stick Click (L3)"/>
+                            <!-- Deflected Inner Thumb -->
+                            <Ellipse x:Name="Thumb_DS4_LS" Canvas.Left="161.6" Canvas.Top="237.3" Width="14" Height="14"
+                                     Fill="#59FFFFFF" Stroke="#FFFFFF" StrokeThickness="1.2" IsHitTestVisible="False"/>
+
+                            <!-- ============ RIGHT ANALOG THUMBSTICK ============ -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.2" Opacity="0.4"
+                                  Data="M299.1,207.9C279,207.9 262.7,224.2 262.7,244.3 262.7,264.4 279,280.7 299.1,280.7 319.2,280.7 335.5,264.4 335.5,244.3 335.5,224.3 319.2,207.9 299.1,207.9L299.1,207.9z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.9" Opacity="0.25"
+                                  Data="M298.9,219.5C285.2,219.5 274.1,230.6 274.1,244.3 274.1,258 285.2,269.1 298.9,269.1 312.6,269.1 323.7,258 323.7,244.3 323.8,230.6 312.7,219.5 298.9,219.5L298.9,219.5z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M299,219.4C306,219.4,312.3,222.3,316.8,226.9L324.9,218.8C324.9,218.8,314.2,208,299,208L299,208 299,208C283.8,208,273.1,218.8,273.1,218.8L281.2,226.9C285.7,222.2,292,219.4,299,219.4z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M274.1,244.3C274.1,237.5,276.8,231.3,281.3,226.8L273.2,218.7C273.2,218.7 262.7,229.5 262.7,244.7 262.7,259.9 273.6,270.3 273.6,270.3L281.7,262.1C277,257.7,274.1,251.3,274.1,244.3z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M316.4,262.2C311.9,266.6 305.8,269.3 299,269.3 292.3,269.3 286.1,266.6 281.6,262.2L273.5,270.4C273.5,270.4,283.7,280.8,298.9,280.8L298.9,280.8 298.9,280.8C314.1,280.8,324.4,270.4,324.4,270.4L316.4,262.2z"/>
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="0.8" Opacity="0.3"
+                                  Data="M335.5,244.7C335.5,229.5,324.9,218.8,324.9,218.8L316.7,227C321.1,231.5 323.8,237.6 323.8,244.4 323.8,251.4 320.9,257.7 316.3,262.2L324.4,270.4C324.5,270.4,335.5,259.9,335.5,244.7L335.5,244.7 335.5,244.7 335.5,244.7z"/>
+                            <!-- Stick Cap Dish (BtnDS4_RS) -->
+                            <Path x:Name="BtnDS4_RS" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.8"
+                                  Data="M299.1,227.8C290,227.8 282.6,235.2 282.6,244.3 282.6,253.4 290,260.8 299.1,260.8 308.2,260.8 315.6,253.4 315.6,244.3 315.6,235.2 308.2,227.8 299.1,227.8L299.1,227.8z"
+                                  ToolTip="Right Stick Click (R3)"/>
+                            <!-- Deflected Inner Thumb -->
+                            <Ellipse x:Name="Thumb_DS4_RS" Canvas.Left="292.1" Canvas.Top="237.3" Width="14" Height="14"
+                                     Fill="#59FFFFFF" Stroke="#FFFFFF" StrokeThickness="1.2" IsHitTestVisible="False"/>
+
+                            <!-- ============ SPEAKER GRILLE & PS HOME BUTTON ============ -->
+                            <!-- Speaker Grille Perforation Dots -->
+                            <Canvas Canvas.Left="220" Canvas.Top="213" Width="28" Height="18" IsHitTestVisible="False" Opacity="0.45">
+                                <Ellipse Canvas.Left="1.5" Canvas.Top="1.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="7.5" Canvas.Top="1.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="13.5" Canvas.Top="1.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="19.5" Canvas.Top="1.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="25.5" Canvas.Top="1.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="4.5" Canvas.Top="7.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="10.5" Canvas.Top="7.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="16.5" Canvas.Top="7.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="22.5" Canvas.Top="7.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="7.5" Canvas.Top="13.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="13.5" Canvas.Top="13.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                                <Ellipse Canvas.Left="19.5" Canvas.Top="13.5" Width="2" Height="2" Fill="#FFFFFF"/>
+                            </Canvas>
+
+                            <!-- PS Home Button -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.35"
+                                  Data="M234,239.9C227.6,239.9 222.5,245 222.5,251.4 222.5,257.8 227.6,262.9 234,262.9 240.4,262.9 245.5,257.8 245.5,251.4 245.5,245 240.4,239.9 234,239.9L234,239.9z"/>
+                            <Path x:Name="BtnDS4_Guide" Cursor="Hand" Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.5" ToolTip="PS (Home) Button"
+                                  Data="M234,240.9C239.8,240.9 244.5,245.6 244.5,251.4 244.5,257.2 239.8,261.9 234,261.9 228.2,261.9 223.5,257.2 223.5,251.4 223.5,245.6 228.2,240.9 234,240.9"/>
+                            <Path IsHitTestVisible="False" Fill="#FFFFFF"
+                                  Data="M234.4,256.8L231.9,255.9 231.9,244.9 236.1,246C236.1,246 238.2,246.4 238.2,249.5 238.2,252.5 235.9,251.8 235.4,251.5L235.4,247.6C235.4,247.6 235.4,247 235,246.9 234.5,246.8 234.4,247.3 234.4,247.5 234.4,247.8 234.4,256.8 234.4,256.8z M231.4,251.6L227.4,253C227.4,253 225.3,253.7 226.7,254.7 228.1,255.7 231,255.4 231.5,255.2L231.5,254 230.3,254.4C230.3,254.4 229.4,254.8 228.7,254.5 228,254.2 229,254 229,254L231.5,253.1 231.4,251.6 231.4,251.6z M234.9,256.6L239.8,254.8C239.8,254.8 241.5,254.3 241.5,253.6 241.5,252.9 239.5,252.2 237.7,252.2 235.9,252.2 234.8,252.7 234.8,252.7L234.8,254.2 237.4,253.3C237.4,253.3 238.3,252.9 239,253.2 239.7,253.5 238.7,253.7 238.7,253.7L234.8,255.1 234.9,256.6 234.9,256.6z"/>
+
+                            <!-- Lower Headphone / EXT port -->
+                            <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="1.0" Opacity="0.3"
+                                  Data="M228,274.9L228,277 C228,278 230,279 234,279 C238,279 240,278 240,277 L240,274.9 Z"/>
                         </Canvas>
                     </Canvas>
 

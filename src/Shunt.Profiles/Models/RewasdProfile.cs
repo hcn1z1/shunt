@@ -134,6 +134,30 @@ public record ProfileShift
 
     [JsonPropertyName("parentId")]
     public int ParentId { get; init; } = 0;
+
+    [JsonPropertyName("mouse")]
+    public ProfileMouseSettings? Mouse { get; init; }
+}
+
+public record ProfileMouseSettings
+{
+    [JsonPropertyName("zones")]
+    public List<ProfileMouseZone> Zones { get; init; } = [];
+}
+
+public record ProfileMouseZone
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = string.Empty;
+
+    [JsonPropertyName("radius")]
+    public int Radius { get; init; }
+
+    [JsonPropertyName("multiplier")]
+    public float Multiplier { get; init; } = 1f;
+
+    [JsonPropertyName("action")]
+    public string? Action { get; init; }
 }
 
 public record ProfileMask

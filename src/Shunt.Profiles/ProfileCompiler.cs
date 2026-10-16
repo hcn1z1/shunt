@@ -18,6 +18,7 @@ public record CompiledProfile
     public Dictionary<int, int> ShiftParentMap { get; init; } = new();
     public VirtualGamepadType TargetType { get; init; } = VirtualGamepadType.Xbox360;
     public GyroscopeSettings GyroSettings { get; init; } = new();
+    public ProfileMouseSettings? MouseZones { get; init; }
 }
 
 /// <summary>
@@ -237,7 +238,8 @@ public static class ProfileCompiler
             RightStickDeadzone = rightDeadzone,
             Rules = rules,
             ShiftParentMap = shiftParentMap,
-            GyroSettings = gyroSettings
+            GyroSettings = gyroSettings,
+            MouseZones = doc.Shifts?.FirstOrDefault(shift => shift.Id == 1)?.Mouse
         };
     }
 }

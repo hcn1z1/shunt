@@ -99,6 +99,7 @@ public class ShuntEngineService : IDisposable
             LeftStickDeadzone = compiled.LeftStickDeadzone,
             RightStickDeadzone = compiled.RightStickDeadzone,
             GyroSettings = compiled.GyroSettings.Clone(),
+            MouseZones = CompileMouseZones(compiled.MouseZones),
             CommandDispatcher = _commandDispatcher
         };
         foreach (var kvp in compiled.ShiftParentMap)
@@ -172,6 +173,34 @@ public class ShuntEngineService : IDisposable
     private void OnVirtualGamepadFeedback(object? sender, FeedbackEventArgs e)
     {
         VirtualGamepadFeedback?.Invoke(this, e);
+    }
+
+    private static MouseZoneConfig? CompileMouseZones(ProfileMouseSettings? settings)
+    {
+        if (settings is null || settings.Zones.Count == 0) return null;
+        var zones = settings.Zones;
+        var deadzone = zones.FirstOrDefault(zone => zone.Name.Equals("deadzone", StringComparison.OrdinalIgnoreCase));
+        var low = zones.FirstOrDefault(zone => zone.Name.Equals("low", StringComparison.OrdinalIgnoreCase));
+        var medium = zones.FirstOrDefault(zone => zone.Name is "med" or "medium");
+        var high = zones.FirstOrDefault(zone => zone.Name.Equals("high", StringComparison.OrdinalIgnoreCase));
+        var config = new MouseZoneConfig(
+            deadzone is null ? 0.05f : deadzone.Radius / 32767f,
+            low is null ? 0.30f : low.Radius / 32767f,
+            medium is null ? 0.70f : medium.Radius / 32767f,
+            high is null ? 0.92f : high.Radius / 32767f,
+            low?.Multiplier ?? 0.5f,
+            medium?.Multiplier ?? 1f,
+            high?.Multiplier ?? 2.2f,
+            high?.Action);
+        try
+        {
+            config.Validate();
+            return config;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
     }
 
     /// <summary>

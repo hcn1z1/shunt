@@ -67,6 +67,60 @@ public partial class GamepadCanvasView : UserControl
         new("TiltRight", "Tilt Right", new Point(720, 270), PinSide.Right, Aliases: CanvasButtonResolver.GetAliases("TiltRight").ToArray()),
     ];
 
+    // DualShock 4 anchor registry on the 1200x750 stage (plan 11 §3.2). Canonical anchor
+    // names are reused so bindings/resolution stay shared; labels use PlayStation nomenclature.
+    private static readonly ButtonAnchor[] Ds4Anchors =
+    [
+        // Face Buttons (geometrical PlayStation cluster)
+        new("A", "Cross", new Point(805, 401), PinSide.Right),
+        new("B", "Circle", new Point(855, 351), PinSide.Right),
+        new("X", "Square", new Point(756, 351), PinSide.Right),
+        new("Y", "Triangle", new Point(805, 302), PinSide.Right),
+
+        // Classic PlayStation D-Pad
+        new("DUp", "D-Up", new Point(396, 319), PinSide.Left),
+        new("DDown", "D-Down", new Point(396, 386), PinSide.Left),
+        new("DLeft", "D-Left", new Point(362, 352), PinSide.Left),
+        new("DRight", "D-Right", new Point(429, 352), PinSide.Left),
+
+        // Symmetrical thumbsticks
+        new("LS", "L3", new Point(496, 441), PinSide.Bottom),
+        new("RS", "R3", new Point(705, 441), PinSide.Bottom),
+
+        // Shoulders & Triggers
+        new("LB", "L1", new Point(399, 239), PinSide.Left),
+        new("RB", "R1", new Point(802, 239), PinSide.Right),
+        new("LT", "L2", new Point(394, 210), PinSide.Left),
+        new("RT", "R2", new Point(807, 210), PinSide.Right),
+
+        // Touchpad & system
+        new("TouchClick", "Touchpad Click", new Point(600, 320), PinSide.Top),
+        new("TouchTap", "Touchpad Tap", new Point(690, 205), PinSide.Top),
+        new("SwipeUp", "Swipe Up", new Point(560, 160), PinSide.Top),
+        new("SwipeDown", "Swipe Down", new Point(600, 250), PinSide.Bottom),
+        new("SwipeLeft", "Swipe Left", new Point(530, 205), PinSide.Left),
+        new("SwipeRight", "Swipe Right", new Point(670, 205), PinSide.Right),
+        new("View", "Share", new Point(464, 283), PinSide.Top),
+        new("Menu", "Options", new Point(735, 283), PinSide.Top),
+        new("Guide", "PS Button", new Point(600, 452), PinSide.Bottom),
+
+        // Gyroscope & motion
+        new("VGYRO", "VGYRO", new Point(600, 175), PinSide.Top),
+        new("TiltUp", "Tilt Up", new Point(640, 160), PinSide.Top),
+        new("TiltDown", "Tilt Down", new Point(640, 250), PinSide.Bottom),
+        new("TiltLeft", "Tilt Left", new Point(545, 250), PinSide.Left),
+        new("TiltRight", "Tilt Right", new Point(655, 175), PinSide.Right),
+    ];
+
+    /// <summary>PlayStation nomenclature for the shared canonical anchors (plan 11 §1.1 step 3).</summary>
+    private static readonly Dictionary<string, string> PlayStationNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["A"] = "Cross", ["B"] = "Circle", ["X"] = "Square", ["Y"] = "Triangle",
+        ["LB"] = "L1", ["RB"] = "R1", ["LT"] = "L2", ["RT"] = "R2",
+        ["View"] = "Share", ["Menu"] = "Options", ["Guide"] = "PS Button",
+        ["LS"] = "L3", ["RS"] = "R3"
+    };
+
     private const double MinBadgeSpacing = 40;
     private const double BadgeWidth = 118;
     private const double LeftRailX = 128;   // badge right edge
@@ -80,6 +134,10 @@ public partial class GamepadCanvasView : UserControl
     private int _activeShift;
     private bool _isRear;
     private string _currentSubmode = "gamepad";
+    private string _chassis = "xbox";
+    private bool _playStationNomenclature;
+
+    private ButtonAnchor[] CurrentAnchors => _chassis == "ds4" ? Ds4Anchors : Anchors;
 
     private DispatcherTimer? _inputGlowTimer;
     private readonly HashSet<string> _currentlyGlowingButtons = new(StringComparer.OrdinalIgnoreCase);
@@ -127,7 +185,7 @@ public partial class GamepadCanvasView : UserControl
         foreach (var (source, target, activator, shift) in _rawMappings)
         {
             if (shift - 1 != _activeShift) continue;
-            foreach (var anchor in Anchors)
+            foreach (var anchor in CurrentAnchors)
             {
                 if (!anchor.Aliases.Any(alias =>
                         source.Contains(alias, StringComparison.OrdinalIgnoreCase) &&
@@ -158,11 +216,19 @@ public partial class GamepadCanvasView : UserControl
     {
         foreach (var anchor in Anchors)
         {
-            if (TryGetElement(anchor.Name) is not { } element) continue;
-            element.Cursor = Cursors.Hand;
-            element.Tag = anchor.Name;
-            element.MouseDown += ButtonShape_MouseDown;
+            if (FindName("Btn_" + anchor.Name) is FrameworkElement element) Attach(element, anchor.Name);
         }
+        foreach (var anchor in Ds4Anchors)
+        {
+            if (FindName("BtnDS4_" + anchor.Name) is FrameworkElement element) Attach(element, anchor.Name);
+        }
+    }
+
+    private void Attach(FrameworkElement element, string name)
+    {
+        element.Cursor = Cursors.Hand;
+        element.Tag = name;
+        element.MouseDown += ButtonShape_MouseDown;
     }
 
     private void ButtonShape_MouseDown(object sender, MouseButtonEventArgs e)
@@ -177,22 +243,41 @@ public partial class GamepadCanvasView : UserControl
     public void SelectButton(string name)
     {
         // Clear previous highlight
-        foreach (var anchor in Anchors)
+        foreach (var anchor in CurrentAnchors)
         {
             if (TryGetElement(anchor.Name) is { } prev)
             {
-                if (prev is Shape shape)
+                if (TryGetDefaultAppearance(anchor.Name, out var def))
                 {
-                    shape.Stroke = IdleButtonStroke;
-                    shape.StrokeThickness = 1.5;
-                    shape.Fill = Brushes.Transparent;
-                    shape.Effect = null;
+                    if (prev is Shape shape)
+                    {
+                        shape.Fill = def.Fill ?? Brushes.Transparent;
+                        shape.Stroke = def.Stroke;
+                        shape.StrokeThickness = def.StrokeThickness;
+                        shape.Effect = def.Effect;
+                    }
+                    else if (prev is Border border)
+                    {
+                        border.Background = def.Fill ?? Brushes.Transparent;
+                        border.BorderBrush = def.Stroke;
+                        border.Effect = def.Effect;
+                    }
                 }
-                else if (prev is Border border && _defaultButtonAppearances.TryGetValue(anchor.Name, out var def))
+                else
                 {
-                    border.Background = def.Fill;
-                    border.BorderBrush = def.Stroke;
-                    border.Effect = def.Effect;
+                    if (prev is Shape shape)
+                    {
+                        shape.Stroke = IdleButtonStroke;
+                        shape.StrokeThickness = 1.5;
+                        shape.Fill = Brushes.Transparent;
+                        shape.Effect = null;
+                    }
+                    else if (prev is Border border)
+                    {
+                        border.Background = Brushes.Transparent;
+                        border.BorderBrush = IdleButtonStroke;
+                        border.Effect = null;
+                    }
                 }
             }
         }
@@ -230,7 +315,15 @@ public partial class GamepadCanvasView : UserControl
         if (_isRear && !RearOnlyTarget(name))
             return null;
 
-        return FindName("Btn_" + name) as FrameworkElement;
+        // Chassis-prefixed element first, then the shared overlay elements (touchpad/gyro).
+        var prefixed = FindName((_chassis == "ds4" ? "BtnDS4_" : "Btn_") + name) as FrameworkElement;
+        return prefixed ?? FindName("Btn_" + name) as FrameworkElement;
+    }
+
+    private FrameworkElement? FindElementForChassis(string chassis, string name)
+    {
+        var prefixed = FindName((chassis == "ds4" ? "BtnDS4_" : "Btn_") + name) as FrameworkElement;
+        return prefixed ?? FindName("Btn_" + name) as FrameworkElement;
     }
 
     private static bool RearOnlyTarget(string name) => name is "P1" or "P2" or "P3" or "P4" or "LTStop" or "RTStop";
@@ -248,7 +341,7 @@ public partial class GamepadCanvasView : UserControl
         LeaderLineLayer.Children.Clear();
         BadgeLayer.Children.Clear();
 
-        var activeAnchors = Anchors.Where(anchor =>
+        var activeAnchors = CurrentAnchors.Where(anchor =>
         {
             if (_currentSubmode == "touchpad")
                 return IsTouchpadTarget(anchor.Name);
@@ -303,17 +396,18 @@ public partial class GamepadCanvasView : UserControl
     {
         var hasBinding = _bindings.TryGetValue(anchor.Name, out var binding);
         var isHighlighted = anchor.Name == highlightBadge || anchor.Name == _selectedButton;
+        var anchorLabel = AnchorLabel(anchor);
 
         var badge = new Border
         {
             Width = BadgeWidth,
             Style = (Style)Application.Current.Resources["BindingBadgeStyle"],
-            ToolTip = $"{anchor.Label}: {binding?.Target ?? "not mapped"}"
+            ToolTip = $"{anchorLabel}: {binding?.Target ?? "not mapped"}"
         };
         var stack = new StackPanel();
         stack.Children.Add(new TextBlock
         {
-            Text = anchor.Label,
+            Text = anchorLabel,
             FontSize = 9,
             FontWeight = FontWeights.Bold,
             Foreground = (Brush)Application.Current.FindResource("TextMutedBrush")
@@ -347,7 +441,12 @@ public partial class GamepadCanvasView : UserControl
         badge.MouseLeave += (_, _) =>
         {
             if (TryGetElement(anchor.Name) is Shape s && anchor.Name != _selectedButton)
-                s.Stroke = IdleButtonStroke;
+            {
+                if (TryGetDefaultAppearance(anchor.Name, out var def) && def.Stroke != null)
+                    s.Stroke = def.Stroke;
+                else
+                    s.Stroke = IdleButtonStroke;
+            }
             RebuildAnnotations();
         };
 
@@ -417,6 +516,57 @@ public partial class GamepadCanvasView : UserControl
         return clone;
     }
 
+    // ------------------------------ Chassis & nomenclature (plan 11 §2-3) ------------------------------
+
+    /// <summary>Display label for an anchor honoring the active chassis and PlayStation nomenclature.</summary>
+    private string AnchorLabel(ButtonAnchor anchor)
+    {
+        if (_chassis == "ds4" || _playStationNomenclature)
+            return PlayStationNames.TryGetValue(anchor.Name, out var psName) ? psName : anchor.Label;
+        return anchor.Label;
+    }
+
+    /// <summary>Switches the vector silhouette between the Xbox One and DualShock 4 chassis.</summary>
+    public void SetChassis(string chassis)
+    {
+        chassis = chassis == "ds4" ? "ds4" : "xbox";
+        if (_chassis == chassis) return;
+
+        _chassis = chassis;
+        ApplyChassisVisibility();
+        if (_selectedButton is not null && TryGetElement(_selectedButton) is null)
+            _selectedButton = null;
+        RebuildAnnotations();
+    }
+
+    private void ApplyChassisVisibility()
+    {
+        var ds4 = _chassis == "ds4";
+        if (FrontGroup != null) FrontGroup.Visibility = ds4 ? Visibility.Collapsed : Visibility.Visible;
+        if (RearGroup != null) RearGroup.Visibility = ds4 || !_isRear ? Visibility.Collapsed : Visibility.Visible;
+        if (Ds4Group != null) Ds4Group.Visibility = ds4 ? Visibility.Visible : Visibility.Collapsed;
+        if (FlipToggle != null) FlipToggle.IsEnabled = !ds4;
+        if (ds4 && _isRear) SetRearView(false);
+    }
+
+    private void ChassisPill_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton { Tag: string tag })
+            SetChassis(tag);
+    }
+
+    /// <summary>
+    /// Aligns the canvas with the profile's virtual target (plan 11 §1.1 step 3): DS4/DS3 targets
+    /// switch to the DualShock 4 silhouette with PlayStation badge labels; other gamepad targets
+    /// use the Xbox One silhouette with Xbox labels.
+    /// </summary>
+    public void SetTargetNomenclature(string target)
+    {
+        _playStationNomenclature = target is "ds4" or "ds3";
+        SetChassis(_playStationNomenclature ? "ds4" : "xbox");
+        RebuildAnnotations();
+    }
+
     // ------------------------------ Sub-mode, Flip & shift ------------------------------
 
     public void SetSubmode(string tag)
@@ -434,12 +584,13 @@ public partial class GamepadCanvasView : UserControl
 
     public void SetRearView(bool rear)
     {
+        if (_chassis == "ds4") return; // DualShock 4 has no rear paddles
         if (_isRear == rear) return;
         _isRear = rear;
         if (FlipToggle != null) FlipToggle.IsChecked = rear;
         if (FrontGroup != null) FrontGroup.Visibility = rear ? Visibility.Collapsed : Visibility.Visible;
         if (RearGroup != null) RearGroup.Visibility = rear ? Visibility.Visible : Visibility.Collapsed;
-        if (Anchors.FirstOrDefault(a => a.Name == _selectedButton) is { } selected &&
+        if (CurrentAnchors.FirstOrDefault(a => a.Name == _selectedButton) is { } selected &&
             selected.RearOnly != _isRear)
             _selectedButton = null;
         RebuildAnnotations();
@@ -479,7 +630,7 @@ public partial class GamepadCanvasView : UserControl
         {
             FrontGroup.Visibility = _isRear ? Visibility.Collapsed : Visibility.Visible;
             RearGroup.Visibility = _isRear ? Visibility.Visible : Visibility.Collapsed;
-            if (Anchors.FirstOrDefault(a => a.Name == _selectedButton) is { } selected &&
+            if (CurrentAnchors.FirstOrDefault(a => a.Name == _selectedButton) is { } selected &&
                 selected.RearOnly != _isRear)
                 _selectedButton = null;
 
@@ -511,17 +662,24 @@ public partial class GamepadCanvasView : UserControl
 
     private void CacheDefaultAppearances()
     {
-        foreach (var anchor in Anchors)
+        foreach (var chassis in new[] { "xbox", "ds4" })
         {
-            if (TryGetElement(anchor.Name) is { } element)
+            foreach (var anchor in chassis == "ds4" ? Ds4Anchors : Anchors)
             {
-                if (element is Shape shape)
-                    _defaultButtonAppearances[anchor.Name] = (shape.Fill, shape.Stroke, shape.StrokeThickness, shape.Effect);
-                else if (element is Border border)
-                    _defaultButtonAppearances[anchor.Name] = (border.Background, border.BorderBrush, border.BorderThickness.Left, border.Effect);
+                if (FindElementForChassis(chassis, anchor.Name) is not { } element) continue;
+                _defaultButtonAppearances[$"{chassis}:{anchor.Name}"] = element switch
+                {
+                    Shape shape => (shape.Fill, shape.Stroke, shape.StrokeThickness, (System.Windows.Media.Effects.Effect?)shape.Effect),
+                    Border border => (border.Background, border.BorderBrush, border.BorderThickness.Left, (System.Windows.Media.Effects.Effect?)border.Effect),
+                    _ => (default(Brush?), default(Brush?), default(double), default(System.Windows.Media.Effects.Effect?))
+                };
             }
         }
     }
+
+    private bool TryGetDefaultAppearance(string name,
+        out (Brush? Fill, Brush? Stroke, double StrokeThickness, System.Windows.Media.Effects.Effect? Effect) def) =>
+        _defaultButtonAppearances.TryGetValue($"{_chassis}:{name}", out def);
 
     private void InputGlowToggle_Click(object sender, RoutedEventArgs e)
     {
@@ -616,8 +774,8 @@ public partial class GamepadCanvasView : UserControl
         }
 
         // Deflect analog stick thumbs
-        UpdateStickDeflection(Thumb_LS, state.Gamepad.sThumbLX, state.Gamepad.sThumbLY);
-        UpdateStickDeflection(Thumb_RS, state.Gamepad.sThumbRX, state.Gamepad.sThumbRY);
+        UpdateStickDeflection(FindName(_chassis == "ds4" ? "Thumb_DS4_LS" : "Thumb_LS") as Ellipse, state.Gamepad.sThumbLX, state.Gamepad.sThumbLY);
+        UpdateStickDeflection(FindName(_chassis == "ds4" ? "Thumb_DS4_RS" : "Thumb_RS") as Ellipse, state.Gamepad.sThumbRX, state.Gamepad.sThumbRY);
     }
 
     public void ApplyButtonGlow(string buttonName)
@@ -669,7 +827,7 @@ public partial class GamepadCanvasView : UserControl
                     border.Background = Brushes.Transparent;
                 }
             }
-            else if (_defaultButtonAppearances.TryGetValue(buttonName, out var def))
+            else if (TryGetDefaultAppearance(buttonName, out var def))
             {
                 if (element is Shape shape)
                 {
@@ -771,8 +929,8 @@ public partial class GamepadCanvasView : UserControl
         }
         _currentlyGlowingButtons.Clear();
 
-        UpdateStickDeflection(Thumb_LS, 0, 0);
-        UpdateStickDeflection(Thumb_RS, 0, 0);
+        UpdateStickDeflection(FindName(_chassis == "ds4" ? "Thumb_DS4_LS" : "Thumb_LS") as Ellipse, 0, 0);
+        UpdateStickDeflection(FindName(_chassis == "ds4" ? "Thumb_DS4_RS" : "Thumb_RS") as Ellipse, 0, 0);
     }
 
     private static void UpdateStickDeflection(Ellipse? thumb, short rawX, short rawY)

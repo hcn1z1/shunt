@@ -1,0 +1,121 @@
+<UserControl x:Class="Shunt.UI.Views.Workspace.MouseCanvasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Mouse canvas toolbar -->
+        <Border Grid.Row="0" Background="{StaticResource SurfaceLevel1Brush}"
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="MOUSE CANVAS" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,10,0"/>
+                <TextBlock Text="Click a zone to bind it · sensor deflection drives the right stick"
+                           FontSize="11" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextMutedBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Vector stage: 1200 x 750 virtual viewport -->
+        <Border Grid.Row="1" Background="{StaticResource CanvasBackgroundBrush}">
+            <Viewbox Stretch="Uniform" Margin="8">
+                <Canvas x:Name="StageCanvas" Width="1200" Height="750" ClipToBounds="True">
+
+                    <!-- Mouse body silhouette -->
+                    <Path Fill="Transparent" Stroke="#FFFFFF" StrokeThickness="2"
+                          Data="M 460,120 C 460,60 520,30 600,30 C 680,30 740,60 740,120 L 740,560 C 740,640 690,700 600,700 C 510,700 460,640 460,560 Z"/>
+                    <!-- Split line between left and right shells -->
+                    <Path Stroke="#FFFFFF" StrokeThickness="1.4" Opacity="0.7" Data="M 600,36 L 600,180"/>
+                    <!-- Shell seam curves -->
+                    <Path Stroke="#FFFFFF" StrokeThickness="1" Opacity="0.3"
+                          Data="M 470,140 C 520,110 560,100 596,100 M 730,140 C 680,110 640,100 604,100"/>
+
+                    <!-- Left mouse button -->
+                    <Border x:Name="Btn_LMB" Canvas.Left="474" Canvas.Top="44" Width="118" Height="130" CornerRadius="14,4,10,10"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse: Left Click (LMB)">
+                        <TextBlock Text="LEFT" FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+                    </Border>
+                    <!-- Right mouse button -->
+                    <Border x:Name="Btn_RMB" Canvas.Left="608" Canvas.Top="44" Width="118" Height="130" CornerRadius="4,14,10,10"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse: Right Click (RMB)">
+                        <TextBlock Text="RIGHT" FontSize="11" FontWeight="SemiBold" Foreground="#FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8"/>
+                    </Border>
+
+                    <!-- Scroll wheel: up / click / down + tilt -->
+                    <Border x:Name="Btn_WheelUp" Canvas.Left="576" Canvas.Top="150" Width="48" Height="44" CornerRadius="8,8,0,0"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse: Wheel Up">
+                        <TextBlock Text="&#x25B2;" FontSize="11" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Btn_MMB" Canvas.Left="576" Canvas.Top="196" Width="48" Height="48" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse: Middle Click (MMB)">
+                        <TextBlock Text="MID" FontSize="9" FontWeight="SemiBold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Btn_WheelDown" Canvas.Left="576" Canvas.Top="246" Width="48" Height="44" CornerRadius="0,0,8,8"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse: Wheel Down">
+                        <TextBlock Text="&#x25BC;" FontSize="11" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Btn_MWheelLeft" Canvas.Left="544" Canvas.Top="196" Width="30" Height="48" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#99FFFFFF" BorderThickness="1.2" Cursor="Hand"
+                            ToolTip="Mouse: Wheel Tilt Left">
+                        <TextBlock Text="&#x25C0;" FontSize="9" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Btn_MWheelRight" Canvas.Left="626" Canvas.Top="196" Width="30" Height="48" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#99FFFFFF" BorderThickness="1.2" Cursor="Hand"
+                            ToolTip="Mouse: Wheel Tilt Right">
+                        <TextBlock Text="&#x25B6;" FontSize="9" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Side buttons: Mouse 4 (back) / Mouse 5 (forward) -->
+                    <Border x:Name="Btn_Mouse4" Canvas.Left="448" Canvas.Top="270" Width="34" Height="86" CornerRadius="12"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse 4 / XButton 1 (Back)">
+                        <TextBlock Text="M4" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border x:Name="Btn_Mouse5" Canvas.Left="448" Canvas.Top="366" Width="34" Height="86" CornerRadius="12"
+                            Background="Transparent" BorderBrush="#FFFFFF" BorderThickness="1.5" Cursor="Hand"
+                            ToolTip="Mouse 5 / XButton 2 (Forward)">
+                        <TextBlock Text="M5" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Optical sensor pad: deflection zones -->
+                    <Border Canvas.Left="520" Canvas.Top="330" Width="160" Height="160" CornerRadius="12"
+                            Background="#14FFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1.2" IsHitTestVisible="False">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="OPTICAL SENSOR" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Deflection &#x2192; Right Stick" FontSize="9" Foreground="#99FFFFFF" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                            <TextBlock x:Name="SensorSensitivityText" Text="Ballistic Sensitivity: 1.0x" FontSize="9" Foreground="#99FFFFFF" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <Border x:Name="Btn_MDeflectUp" Canvas.Left="566" Canvas.Top="338" Width="68" Height="34" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#33FFFFFF" BorderThickness="1" Cursor="Hand"
+                            ToolTip="Mouse: Deflection Up (MOUSE_Y_UP)"/>
+                    <Border x:Name="Btn_MDeflectDown" Canvas.Left="566" Canvas.Top="448" Width="68" Height="34" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#33FFFFFF" BorderThickness="1" Cursor="Hand"
+                            ToolTip="Mouse: Deflection Down (MOUSE_Y_DOWN)"/>
+                    <Border x:Name="Btn_MDeflectLeft" Canvas.Left="526" Canvas.Top="380" Width="34" Height="60" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#33FFFFFF" BorderThickness="1" Cursor="Hand"
+                            ToolTip="Mouse: Deflection Left (MOUSE_X_LEFT)"/>
+                    <Border x:Name="Btn_MDeflectRight" Canvas.Left="640" Canvas.Top="380" Width="34" Height="60" CornerRadius="6"
+                            Background="Transparent" BorderBrush="#33FFFFFF" BorderThickness="1" Cursor="Hand"
+                            ToolTip="Mouse: Deflection Right (MOUSE_X_RIGHT)"/>
+
+                    <!-- Leader lines and badges are dynamically generated into these layers -->
+                    <Canvas x:Name="LeaderLineLayer"/>
+                    <Canvas x:Name="BadgeLayer"/>
+                </Canvas>
+            </Viewbox>
+        </Border>
+    </Grid>
+</UserControl>

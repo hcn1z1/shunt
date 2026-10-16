@@ -12,6 +12,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -74,14 +75,25 @@
                           SelectionChanged="ShiftLayerCombo_SelectionChanged"/>
             </StackPanel>
 
+            <!-- Chord partner selection -->
+            <StackPanel Grid.Row="6" Margin="0,4,0,8">
+                <TextBlock Text="CHORD PARTNER (OPTIONAL)" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                <ComboBox x:Name="ChordPartnerCombo" Style="{StaticResource DarkComboBox}"
+                          ItemContainerStyle="{StaticResource DarkComboBoxItem}" DisplayMemberPath="Name"
+                          ToolTip="Choose a second physical control to trigger this mapping as a chord"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="Add chord mapping"
+                        Click="AddChordButton_Click" Margin="0,6,0,0"/>
+            </StackPanel>
+
             <!-- Planned capability note -->
-            <TextBlock x:Name="CapabilityNote" Grid.Row="6"
+            <TextBlock x:Name="CapabilityNote" Grid.Row="7"
                        Text="Turbo frequency, toggle latch, mute (unmap native input) and shift-layer jump controls arrive with the engine modifier phase."
                        Style="{StaticResource BodyText}" FontSize="10" TextWrapping="Wrap"
                        Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Bottom" Margin="0,8,0,6"/>
 
             <!-- Actions -->
-            <StackPanel Grid.Row="7">
+            <StackPanel Grid.Row="8">
                 <Button x:Name="ApplyButton" Style="{StaticResource PrimaryButton}" Content="Update mapping"
                         Click="ApplyButton_Click"/>
                 <Button Style="{StaticResource SecondaryButton}" Content="Open in mappings list"

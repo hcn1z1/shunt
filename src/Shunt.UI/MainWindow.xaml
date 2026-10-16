@@ -180,18 +180,41 @@
                     </Button.Template>
                 </Button>
 
-                <!-- Profile (game) + config target selectors -->
+                <!-- Profile (game) + config target selectors.
+                     IsHitTestVisibleInChrome is required: this row sits inside the 42px
+                     WindowChrome caption band, otherwise clicks are consumed as caption drag. -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
                     <ComboBox x:Name="ProfileComboBox" Width="250" Style="{StaticResource DarkComboBox}"
                               ItemContainerStyle="{StaticResource DarkComboBoxItem}"
                               DisplayMemberPath="Name"
+                              WindowChrome.IsHitTestVisibleInChrome="True"
                               SelectionChanged="ProfileComboBox_SelectionChanged"
                               ToolTip="Game profile"/>
-                    <ComboBox x:Name="TargetTypeCombo" Width="140" Style="{StaticResource DarkComboBox}"
+                    <ComboBox x:Name="TargetTypeCombo" Width="230" Style="{StaticResource DarkComboBox}"
                               ItemContainerStyle="{StaticResource DarkComboBoxItem}"
-                              DisplayMemberPath="Name" SelectedValuePath="Value"
+                              SelectedValuePath="Value"
+                              WindowChrome.IsHitTestVisibleInChrome="True"
                               SelectionChanged="TargetTypeCombo_SelectionChanged"
-                              Margin="8,0,0,0" ToolTip="Virtual controller target"/>
+                              Margin="8,0,0,0" ToolTip="Virtual target controller emulated by Shunt">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="24"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding IconGlyph}" FontFamily="Segoe UI Emoji"
+                                               FontSize="14" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding Subtitle}" FontSize="9"
+                                                   Foreground="{StaticResource TextMutedBrush}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </StackPanel>
 
                 <!-- Centered filler keeps header content anchored during resize -->
@@ -200,10 +223,10 @@
                 <!-- Hardware slot pills -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0"
                             ToolTip="Hardware slots (Ctrl+1..4)">
-                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="1" IsChecked="True" ToolTip="Slot 1 (Ctrl+1)"/>
-                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="2" ToolTip="Slot 2 (Ctrl+2)"/>
-                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="3" ToolTip="Slot 3 (Ctrl+3)"/>
-                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="4" ToolTip="Slot 4 (Ctrl+4)"/>
+                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="1" IsChecked="True" ToolTip="Slot 1 (Ctrl+1)" Padding="0"/>
+                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="2" ToolTip="Slot 2 (Ctrl+2)" Padding="0"/>
+                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="3" ToolTip="Slot 3 (Ctrl+3)" Padding="0"/>
+                    <RadioButton Style="{StaticResource SlotPill}" GroupName="Slots" Content="4" ToolTip="Slot 4 (Ctrl+4)" Padding="0"/>
                 </StackPanel>
 
                 <!-- Master remap toggle + window controls -->
@@ -324,12 +347,21 @@
             <Grid Grid.Column="1" Margin="0">
                 <!-- Gamepad canvas stage + BindingFrame inspector drawer -->
                 <Grid x:Name="StageGamepad" Background="{StaticResource CanvasBackgroundBrush}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition x:Name="InspectorColumn" Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <workspace:GamepadCanvasView x:Name="GamepadCanvas" Grid.Column="0"/>
-                    <inspector:BindingFrameView x:Name="BindingFrame" Grid.Column="1" Width="0"
+
+                    <Grid Grid.Row="1" Grid.Column="0">
+                        <workspace:GamepadCanvasView x:Name="GamepadCanvas"/>
+                        <workspace:KeyboardCanvasView x:Name="KeyboardCanvas" Visibility="Collapsed"/>
+                        <workspace:MouseCanvasView x:Name="MouseCanvas" Visibility="Collapsed"/>
+                    </Grid>
+                    <inspector:BindingFrameView x:Name="BindingFrame" Grid.Row="1" Grid.Column="1" Width="0"
                                                 Visibility="Collapsed"/>
                 </Grid>
 

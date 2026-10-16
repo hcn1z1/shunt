@@ -67,6 +67,8 @@ public static class CanvasButtonResolver
 
     static CanvasButtonResolver()
     {
+        RegisterKeyboardAndMouseAnchors();
+
         foreach (var (anchor, aliases) in AnchorAliasesMap)
         {
             // Register anchor itself
@@ -77,6 +79,105 @@ public static class CanvasButtonResolver
                 RegisterAlias(alias, anchor);
             }
         }
+    }
+
+    /// <summary>
+    /// Keyboard (plan 11 §4) and mouse (plan 11 §5) canvas anchors. Aliases deliberately avoid
+    /// bare single letters and words that already belong to gamepad anchors ("Home", "Back", "Menu").
+    /// </summary>
+    private static void RegisterKeyboardAndMouseAnchors()
+    {
+        // Letters A-Z ("Key: W" matches the keyboard output naming from KeyScanCodeTable).
+        foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        {
+            AnchorAliasesMap[$"Key{letter}"] = [$"Key: {letter}", $"Key{letter}", $"KB_{letter}", $"BTN_KEY_{letter}"];
+        }
+
+        // Digit row
+        foreach (var digit in "1234567890")
+        {
+            AnchorAliasesMap[$"Key{digit}"] = [$"Key: {digit}", $"Key{digit}", $"KB_{digit}", $"BTN_KEY_{digit}"];
+        }
+
+        // Function row
+        for (var f = 1; f <= 12; f++)
+        {
+            AnchorAliasesMap[$"KeyF{f}"] = [$"Key: F{f}", $"KeyF{f}", $"KB_F{f}", $"BTN_KEY_F{f}"];
+        }
+
+        // Modifier, control and navigation keys
+        AnchorAliasesMap["KeyEsc"] = ["Key: Esc", "KeyEsc", "Esc", "BTN_KEY_ESC"];
+        AnchorAliasesMap["KeySpace"] = ["Key: Spacebar", "Key: Space", "Space", "KeySpace", "BTN_KEY_SPACE"];
+        AnchorAliasesMap["KeyEnter"] = ["Key: Enter", "Enter", "KeyEnter", "BTN_KEY_ENTER"];
+        AnchorAliasesMap["KeyBackspace"] = ["Key: Backspace", "Backspace", "KeyBackspace"];
+        AnchorAliasesMap["KeyTab"] = ["Key: Tab", "Tab", "KeyTab"];
+        AnchorAliasesMap["KeyCaps"] = ["Key: Caps Lock", "Caps Lock", "CapsLock", "KeyCaps"];
+        AnchorAliasesMap["KeyLShift"] = ["Key: Left Shift", "Left Shift", "LShift", "KeyLShift"];
+        AnchorAliasesMap["KeyRShift"] = ["Key: Right Shift", "Right Shift", "RShift", "KeyRShift"];
+        AnchorAliasesMap["KeyLCtrl"] = ["Key: Left Ctrl", "Left Ctrl", "LCtrl", "KeyLCtrl"];
+        AnchorAliasesMap["KeyRCtrl"] = ["Key: Right Ctrl", "Right Ctrl", "RCtrl", "KeyRCtrl"];
+        AnchorAliasesMap["KeyLAlt"] = ["Key: Left Alt", "Left Alt", "LAlt", "KeyLAlt"];
+        AnchorAliasesMap["KeyRAlt"] = ["Key: Right Alt", "Right Alt (AltGr)", "Right Alt", "AltGr", "RAlt", "KeyRAlt"];
+        AnchorAliasesMap["KeyLWin"] = ["Key: Left Windows", "Left Windows", "LWin", "KeyLWin"];
+        AnchorAliasesMap["KeyRWin"] = ["Key: Right Windows", "Right Windows", "RWin", "KeyRWin"];
+        AnchorAliasesMap["KeyMenu"] = ["Key: Application / Menu", "Application", "Apps", "KeyMenu"];
+
+        AnchorAliasesMap["KeyUp"] = ["Key: Up Arrow", "Up Arrow", "KeyUp", "BTN_KEY_UP"];
+        AnchorAliasesMap["KeyDown"] = ["Key: Down Arrow", "Down Arrow", "KeyDown", "BTN_KEY_DOWN"];
+        AnchorAliasesMap["KeyLeft"] = ["Key: Left Arrow", "Left Arrow", "KeyLeft", "BTN_KEY_LEFT"];
+        AnchorAliasesMap["KeyRight"] = ["Key: Right Arrow", "Right Arrow", "KeyRight", "BTN_KEY_RIGHT"];
+
+        AnchorAliasesMap["KeyIns"] = ["Key: Insert", "Insert", "KeyIns"];
+        AnchorAliasesMap["KeyDel"] = ["Key: Delete", "Delete", "KeyDel"];
+        AnchorAliasesMap["KeyHome"] = ["Key: Home", "KeyHome", "BTN_KEY_HOME"];
+        AnchorAliasesMap["KeyEnd"] = ["Key: End", "KeyEnd"];
+        AnchorAliasesMap["KeyPgUp"] = ["Key: Page Up", "Page Up", "KeyPgUp"];
+        AnchorAliasesMap["KeyPgDn"] = ["Key: Page Down", "Page Down", "KeyPgDn"];
+        AnchorAliasesMap["KeyPrtSc"] = ["Key: Print Screen", "Print Screen", "PrtSc", "KeyPrtSc"];
+        AnchorAliasesMap["KeyScrLk"] = ["Key: Scroll Lock", "Scroll Lock", "ScrLk", "KeyScrLk"];
+        AnchorAliasesMap["KeyPause"] = ["Key: Pause", "Pause", "KeyPause"];
+
+        // Punctuation & OEM row
+        AnchorAliasesMap["KeyMinus"] = ["Key: -", "KeyMinus"];
+        AnchorAliasesMap["KeyEquals"] = ["Key: =", "KeyEquals"];
+        AnchorAliasesMap["KeyLBracket"] = ["Key: [", "KeyLBracket"];
+        AnchorAliasesMap["KeyRBracket"] = ["Key: ]", "KeyRBracket"];
+        AnchorAliasesMap["KeySemicolon"] = ["Key: ;", "KeySemicolon"];
+        AnchorAliasesMap["KeyApostrophe"] = ["Key: '", "KeyApostrophe"];
+        AnchorAliasesMap["KeyGrave"] = ["Key: `", "KeyGrave"];
+        AnchorAliasesMap["KeyBackslash"] = ["Key: \\", "KeyBackslash"];
+        AnchorAliasesMap["KeyComma"] = ["Key: ,", "KeyComma"];
+        AnchorAliasesMap["KeyPeriod"] = ["Key: .", "KeyPeriod"];
+        AnchorAliasesMap["KeySlash"] = ["Key: /", "KeySlash"];
+        AnchorAliasesMap["KeyIso"] = ["Key: <> (ISO)", "KeyIso"];
+
+        // Numpad cluster
+        AnchorAliasesMap["KeyNumLock"] = ["Key: NumLock", "NumLock", "KeyNumLock"];
+        AnchorAliasesMap["KeyNumDiv"] = ["Key: Numpad /", "Numpad /", "KeyNumDiv"];
+        AnchorAliasesMap["KeyNumMul"] = ["Key: Numpad *", "Numpad *", "KeyNumMul"];
+        AnchorAliasesMap["KeyNumSub"] = ["Key: Numpad -", "Numpad -", "KeyNumSub"];
+        AnchorAliasesMap["KeyNumAdd"] = ["Key: Numpad +", "Numpad +", "KeyNumAdd"];
+        AnchorAliasesMap["KeyNumEnter"] = ["Key: Numpad Enter", "Numpad Enter", "KeyNumEnter"];
+        AnchorAliasesMap["KeyNumDec"] = ["Key: Numpad .", "Numpad .", "KeyNumDec"];
+        foreach (var n in "0123456789")
+        {
+            AnchorAliasesMap[$"KeyNum{n}"] = [$"Key: Numpad {n}", $"Numpad {n}", $"KeyNum{n}"];
+        }
+
+        // Mouse buttons, wheel and deflection (plan 11 §5)
+        AnchorAliasesMap["LMB"] = ["Mouse: Left Click", "Mouse Left Click", "LMB", "MOUSE_BTN_1", "Mouse 1"];
+        AnchorAliasesMap["RMB"] = ["Mouse: Right Click", "Mouse Right Click", "RMB", "MOUSE_BTN_2", "Mouse 2"];
+        AnchorAliasesMap["MMB"] = ["Mouse: Middle Click", "Mouse Middle Click", "MMB", "MOUSE_BTN_3", "Middle Click"];
+        AnchorAliasesMap["Mouse4"] = ["Mouse: Mouse 4 (XButton 1)", "Mouse 4 (XButton 1)", "Mouse 4", "Mouse4", "MOUSE_BTN_4", "XButton1"];
+        AnchorAliasesMap["Mouse5"] = ["Mouse: Mouse 5 (XButton 2)", "Mouse 5 (XButton 2)", "Mouse 5", "Mouse5", "MOUSE_BTN_5", "XButton2"];
+        AnchorAliasesMap["WheelUp"] = ["Mouse: Wheel Up", "Wheel Up", "WheelUp", "MOUSE_WHEEL_UP"];
+        AnchorAliasesMap["WheelDown"] = ["Mouse: Wheel Down", "Wheel Down", "WheelDown", "MOUSE_WHEEL_DOWN"];
+        AnchorAliasesMap["MWheelLeft"] = ["Mouse: Wheel Tilt Left", "Wheel Tilt Left", "MWheelLeft", "MOUSE_WHEEL_LEFT"];
+        AnchorAliasesMap["MWheelRight"] = ["Mouse: Wheel Tilt Right", "Wheel Tilt Right", "MWheelRight", "MOUSE_WHEEL_RIGHT"];
+        AnchorAliasesMap["MDeflectLeft"] = ["Mouse: Mouse Deflection Left", "Mouse Deflection Left", "MDeflectLeft", "MOUSE_X_LEFT"];
+        AnchorAliasesMap["MDeflectRight"] = ["Mouse: Mouse Deflection Right", "Mouse Deflection Right", "MDeflectRight", "MOUSE_X_RIGHT"];
+        AnchorAliasesMap["MDeflectUp"] = ["Mouse: Mouse Deflection Up", "Mouse Deflection Up", "MDeflectUp", "MOUSE_Y_UP"];
+        AnchorAliasesMap["MDeflectDown"] = ["Mouse: Mouse Deflection Down", "Mouse Deflection Down", "MDeflectDown", "MOUSE_Y_DOWN"];
     }
 
     private static void RegisterAlias(string alias, string anchor)
