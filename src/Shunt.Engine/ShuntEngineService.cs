@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Shunt.Core.Interfaces;
 using Shunt.Core.Models;
 using Shunt.Emulation;
+using Shunt.Engine.Hardware;
 using Shunt.Profiles;
 using Shunt.Profiles.Models;
 
@@ -19,9 +20,14 @@ public class ShuntEngineService : IDisposable
     private CancellationTokenSource? _cts;
     private readonly RewasdProfileDocument?[] _slotProfiles = new RewasdProfileDocument?[4];
     private readonly CommandDispatcher _commandDispatcher;
+    private readonly XboxToDualShock4ShuntService _shuntRuntime = new();
+    private readonly object _imuLock = new();
+    private ImuSensorSample? _latestImuSample;
     private ushort _reportCounter;
 
     public bool IsRunning { get; private set; }
+    public bool IsShuntModeEnabled { get; private set; }
+    public bool IsShuntGyroEnabled => _shuntRuntime.IsGyroEnabled;
     public int CurrentSlot { get; private set; } = 0;
     public RewasdProfileDocument? ActiveProfile => _slotProfiles[CurrentSlot];
     public IVirtualGamepad? ActiveVirtualGamepad => _activeVirtualGamepad;
@@ -34,6 +40,7 @@ public class ShuntEngineService : IDisposable
     /// so the UI can visualize real-time haptics over SSE (plan 07 §6).
     /// </summary>
     public event EventHandler<FeedbackEventArgs>? VirtualGamepadFeedback;
+    public event Action<bool>? ShuntGyroStateChanged;
 
     /// <summary>Last formatted HID output report for the active virtual target (diagnostics).</summary>
     public byte[]? LastOutputReport { get; private set; }
@@ -112,6 +119,7 @@ public class ShuntEngineService : IDisposable
         IsRunning = true;
         _hardwareDiscovery.Start();
         _hardwareDiscovery.SelectedController?.StartPolling();
+        _shuntRuntime.GyroStateChanged += OnShuntGyroStateChanged;
     }
 
     /// <summary>
@@ -154,6 +162,12 @@ public class ShuntEngineService : IDisposable
             return;
 
         var mapped = _pipeline.Process(rawInput);
+        if (IsShuntModeEnabled)
+        {
+            ImuSensorSample? sample;
+            lock (_imuLock) sample = _latestImuSample;
+            mapped = _shuntRuntime.Process(mapped, Environment.TickCount64, sample);
+        }
         _activeVirtualGamepad.UpdateState(mapped);
 
         // Format the device-specific HID report from the high-capacity virtual state (plan 07 §4)
@@ -212,8 +226,35 @@ public class ShuntEngineService : IDisposable
         _hardwareDiscovery.SelectedController?.Vibrate(leftMotor, rightMotor);
     }
 
+    /// <summary>Starts Xbox-to-DS4 runtime filtering after the UI completes the hardware check.</summary>
+    public bool EnableShuntMode(GyroActivatorMode activationMode = GyroActivatorMode.Toggle)
+    {
+        if (!IsRunning || _activeVirtualGamepad?.Type != VirtualGamepadType.DualShock4) return false;
+        _shuntRuntime.ActivationMode = activationMode;
+        _shuntRuntime.Reset();
+        IsShuntModeEnabled = true;
+        return true;
+    }
+
+    public void DisableShuntMode()
+    {
+        IsShuntModeEnabled = false;
+        _shuntRuntime.Reset();
+        lock (_imuLock) _latestImuSample = null;
+    }
+
+    /// <summary>Supplies the most recent physical HID IMU sample to the running Shunt Mode frame loop.</summary>
+    public void UpdateImuSample(ImuSensorSample sample)
+    {
+        lock (_imuLock) _latestImuSample = sample;
+    }
+
+    private void OnShuntGyroStateChanged(bool enabled) => ShuntGyroStateChanged?.Invoke(enabled);
+
     private void StopVirtualGamepad()
     {
+        DisableShuntMode();
+        _shuntRuntime.GyroStateChanged -= OnShuntGyroStateChanged;
         if (_activeVirtualGamepad != null)
         {
             _activeVirtualGamepad.FeedbackReceived -= OnVirtualGamepadFeedback;
