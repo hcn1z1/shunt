@@ -372,6 +372,10 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
         report[8] = ToTriggerByte(state.RightTrigger);
         BinaryPrimitives.WriteUInt16LittleEndian(report.AsSpan(9, 2), _reportTimestamp++);
         report[11] = 0xFF; // Full battery
+        DualShock4ReportFormatter.WriteMotion(report, new MotionState(
+            state.GyroPitch, state.GyroRoll, state.GyroYaw,
+            state.AccelX, state.AccelY, state.AccelZ,
+            state.GyroVelX, state.GyroVelY, state.GyroVelZ));
         report[29] = 0x1A; // Wired, full battery
         report[32] = 1; // One touch sample in this report
 

@@ -91,6 +91,9 @@ public record GamepadState
     public float GyroVelX { get; init; } = 0f;     // Pitch velocity (deg/s)
     public float GyroVelY { get; init; } = 0f;     // Yaw velocity (deg/s)
     public float GyroVelZ { get; init; } = 0f;     // Roll velocity (deg/s)
+    public float AccelX { get; init; } = 0f;       // Linear acceleration (g)
+    public float AccelY { get; init; } = 0f;
+    public float AccelZ { get; init; } = 0f;
 
     public bool HasButton(GamepadButtons button) => (Buttons & button) == button;
 

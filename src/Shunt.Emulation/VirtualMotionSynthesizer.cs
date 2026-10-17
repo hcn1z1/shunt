@@ -156,7 +156,7 @@ public static class VirtualGamepadStateBridge
             RightTrigger = state.RightTrigger,
             Motion = new MotionState(
                 state.GyroPitch, state.GyroRoll, state.GyroYaw,
-                0f, 0f, 0f,
+                state.AccelX, state.AccelY, state.AccelZ,
                 state.GyroVelX, state.GyroVelY, state.GyroVelZ)
         };
     }

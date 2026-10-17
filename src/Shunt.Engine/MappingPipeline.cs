@@ -130,7 +130,10 @@ public class MappingPipeline
             GyroYaw = input.GyroYaw,
             GyroVelX = input.GyroVelX,
             GyroVelY = input.GyroVelY,
-            GyroVelZ = input.GyroVelZ
+            GyroVelZ = input.GyroVelZ,
+            AccelX = input.AccelX,
+            AccelY = input.AccelY,
+            AccelZ = input.AccelZ
         };
 
         // 2. Evaluate deflection zones
