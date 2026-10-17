@@ -14,6 +14,9 @@ public interface IHidHideService
     /// <summary>The installed version of the HidHide driver, or null if not installed.</summary>
     string? DriverVersion { get; }
 
+    /// <summary>Whether HidHide is currently filtering the configured device list.</summary>
+    bool IsActive { get; set; }
+
     /// <summary>Whether inverse whitelisting (blocking all unapproved apps) is active.</summary>
     bool IsAppListInverted { get; set; }
 

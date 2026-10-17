@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ public class ShuntEngineService : IDisposable
 {
     private readonly IVirtualGamepadManager _gamepadManager;
     private readonly IHardwareDiscoveryService _hardwareDiscovery;
+    private readonly IHidHideService? _hidHideService;
     private IVirtualGamepad? _activeVirtualGamepad;
     private MappingPipeline? _pipeline;
     private CancellationTokenSource? _cts;
@@ -26,6 +28,9 @@ public class ShuntEngineService : IDisposable
     private ImuSensorSample? _latestImuSample;
     private HardwareImuPoller? _activeImuPoller;
     private DsuMotionServer? _dsuServer;
+    private string? _shuntBlockedDevice;
+    private bool _shuntAddedDeviceBlock;
+    private bool _filterWasActive;
     private ushort _reportCounter;
 
     public bool IsRunning { get; private set; }
@@ -52,9 +57,10 @@ public class ShuntEngineService : IDisposable
     /// <summary>Target of the currently active virtual controller.</summary>
     public VirtualControllerTarget ActiveTarget { get; private set; } = VirtualControllerTarget.The360;
 
-    public ShuntEngineService(IVirtualGamepadManager gamepadManager, IHardwareDiscoveryService? hardwareDiscovery = null)
+    public ShuntEngineService(IVirtualGamepadManager gamepadManager, IHardwareDiscoveryService? hardwareDiscovery = null, IHidHideService? hidHideService = null)
     {
         _gamepadManager = gamepadManager;
+        _hidHideService = hidHideService ?? (OperatingSystem.IsWindows() ? new HidHideService() : null);
         _commandDispatcher = new CommandDispatcher(this);
         _hardwareDiscovery = hardwareDiscovery ?? (gamepadManager is Emulation.StubVirtualGamepadManager
             ? new Emulation.StubHardwareDiscoveryService()
@@ -246,6 +252,7 @@ public class ShuntEngineService : IDisposable
         IsShuntModeEnabled = false;
         _shuntRuntime.Reset();
         lock (_imuLock) _latestImuSample = null;
+        RestoreDeviceIsolation();
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -253,6 +260,12 @@ public class ShuntEngineService : IDisposable
     {
         ArgumentNullException.ThrowIfNull(device);
         if (!EnableShuntMode(activationMode)) return false;
+        if (!TryEnableDeviceIsolation())
+        {
+            DisableShuntMode();
+            ShuntModeError?.Invoke("HidHide is unavailable or the selected physical controller could not be cloaked.");
+            return false;
+        }
         await StopImuPollerAsync().ConfigureAwait(false);
 
         var poller = device.CreatePoller();
@@ -274,6 +287,34 @@ public class ShuntEngineService : IDisposable
             ShuntModeError?.Invoke(ex.Message);
             return false;
         }
+    }
+
+    private bool TryEnableDeviceIsolation()
+    {
+        var controller = _hardwareDiscovery.SelectedController;
+        var hider = _hidHideService;
+        if (controller is null || hider is null || !hider.IsAvailable) return false;
+        var executable = Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrWhiteSpace(executable) || !hider.AddApplicationWhitelist(executable)) return false;
+
+        _filterWasActive = hider.IsActive;
+        var blocked = hider.GetBlockedDevices();
+        _shuntAddedDeviceBlock = !blocked.Contains(controller.Id, StringComparer.OrdinalIgnoreCase);
+        if (!hider.BlockDevice(controller.Id)) return false;
+        _shuntBlockedDevice = controller.Id;
+        hider.IsActive = true;
+        return hider.IsActive;
+    }
+
+    private void RestoreDeviceIsolation()
+    {
+        var hider = _hidHideService;
+        if (hider is null) return;
+        if (_shuntAddedDeviceBlock && !string.IsNullOrWhiteSpace(_shuntBlockedDevice))
+            _ = hider.UnblockDevice(_shuntBlockedDevice);
+        if (_shuntBlockedDevice is not null) hider.IsActive = _filterWasActive;
+        _shuntBlockedDevice = null;
+        _shuntAddedDeviceBlock = false;
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
