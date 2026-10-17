@@ -22,6 +22,14 @@ public sealed record VibrationFeedbackEvent(
     int LedNumber,
     long Timestamp);
 
+public sealed record ControllerConnectionEvent(
+    bool IsConnected,
+    string Id,
+    string Name,
+    string ConnectionType,
+    int BatteryLevel,
+    DateTimeOffset Timestamp);
+
 /// <summary>
 /// Server-Sent Events (SSE) client consuming the streaming telemetry from the engine
 /// at <c>/v2.6/Events</c> (plan 09 §3, UI Phase 4).
@@ -44,6 +52,7 @@ public sealed class EngineEventClient : IDisposable
 
     public event Action<KeyPressedEvent>? KeyPressedReceived;
     public event Action<VibrationFeedbackEvent>? VibrationFeedbackReceived;
+    public event Action<ControllerConnectionEvent>? ControllerConnectionChanged;
     public event Action<string, string>? EventReceived;
     public event Action<bool>? ConnectionStateChanged;
 
@@ -186,6 +195,18 @@ public sealed class EngineEventClient : IDisposable
 
                 var keyEvent = new KeyPressedEvent(deviceId, deviceType, buttonId, buttonName, timestamp);
                 Dispatch(() => KeyPressedReceived?.Invoke(keyEvent));
+            }
+            else if (string.Equals(eventType, "ControllerConnected", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(eventType, "ControllerDisconnected", StringComparison.OrdinalIgnoreCase))
+            {
+                bool connected = string.Equals(eventType, "ControllerConnected", StringComparison.OrdinalIgnoreCase);
+                var deviceId = root.TryGetProperty("Id", out var cId) ? cId.GetString() ?? "" : "";
+                var name = root.TryGetProperty("Name", out var cName) ? cName.GetString() ?? "Controller" : "Controller";
+                var connType = root.TryGetProperty("ConnectionType", out var cConn) ? cConn.GetString() ?? "" : "";
+                int battery = root.TryGetProperty("BatteryLevel", out var cBatt) && cBatt.TryGetInt32(out var bVal) ? bVal : -1;
+
+                var connectionEvent = new ControllerConnectionEvent(connected, deviceId, name, connType, battery, DateTimeOffset.UtcNow);
+                Dispatch(() => ControllerConnectionChanged?.Invoke(connectionEvent));
             }
             else if (string.Equals(eventType, "VibrationFeedback", StringComparison.OrdinalIgnoreCase))
             {

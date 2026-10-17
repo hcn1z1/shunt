@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Shunt.Core.Interfaces;
 using Shunt.Core.Models;
@@ -189,6 +190,15 @@ public sealed class EngineHttpServer : IAsyncDisposable
             _engine.Stop();
             if (wasRunning) _events.Publish(new { Type = "ProfileUnapplied" });
             return Results.Ok(new { Result = true });
+        });
+        app.MapPost("/api/engine/shutdown", (IHostApplicationLifetime lifetime) =>
+        {
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(200);
+                lifetime.StopApplication();
+            });
+            return Results.Ok(new { Status = "ShuttingDown" });
         });
 
         app.MapPost("/v2.6/ControllerService/ApplyConfig", async (ApplyProfileRequest request) =>
@@ -379,6 +389,9 @@ public sealed class EngineHttpServer : IAsyncDisposable
         await app.StartAsync(cancellationToken);
         _application = app;
     }
+
+    public Task WaitForShutdownAsync(CancellationToken cancellationToken = default) =>
+        _application?.WaitForShutdownAsync(cancellationToken) ?? Task.CompletedTask;
 
     private object[] EnumerateGames() => Directory.Exists(_profilesRoot)
         ? Directory.GetDirectories(_profilesRoot).Select(path => new

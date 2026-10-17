@@ -217,8 +217,17 @@
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Centered filler keeps header content anchored during resize -->
-                <Border Grid.Column="2"/>
+                <!-- Shunt Mode Live Status Indicator -->
+                <Button x:Name="ShuntLiveIndicator" Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Click="ShuntLiveIndicator_Click" Cursor="Hand" WindowChrome.IsHitTestVisibleInChrome="True"
+                        Visibility="Collapsed" Style="{StaticResource SecondaryButton}" Padding="10,3"
+                        ToolTip="Click to open Shunt Mode Dashboard">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="ShuntLiveDot" Width="8" Height="8" Fill="{StaticResource StatusSuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ShuntLiveTitle" Text="SHUNT MODE: ACTIVE" FontSize="11" FontWeight="Bold" Foreground="{StaticResource StatusSuccessBrush}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ShuntLiveDetails" Text=" · DS4 + DSU (UDP 26760)" FontSize="10" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
 
                 <!-- Hardware slot pills -->
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0"
@@ -330,6 +339,8 @@
                                  Tag="{StaticResource IconTrigger}" Checked="NavItem_Checked" CommandParameter="triggers"/>
                     <RadioButton Style="{StaticResource NavItem}" GroupName="Stage" Content="Gyroscope"
                                  Tag="{StaticResource IconGyro}" Checked="NavItem_Checked" CommandParameter="gyro"/>
+                    <RadioButton x:Name="NavShuntItem" Style="{StaticResource NavItem}" GroupName="Stage" Content="Shunt mode"
+                                 Tag="{StaticResource IconShunt}" Checked="NavItem_Checked" CommandParameter="shunt"/>
                     <RadioButton Style="{StaticResource NavItem}" GroupName="Stage" Content="Key combos"
                                  Tag="{StaticResource IconCombo}" Checked="NavItem_Checked" CommandParameter="combo"/>
                     <RadioButton Style="{StaticResource NavItem}" GroupName="Stage" Content="Radial menu"
@@ -471,6 +482,7 @@
                 <tuners:StickCurvesVisualizer x:Name="StageSticks" Visibility="Collapsed"/>
                 <tuners:TriggerZonesView x:Name="StageTriggers" Visibility="Collapsed"/>
                 <tuners:GyroscopeView x:Name="StageGyro" Visibility="Collapsed"/>
+                <tuners:ShuntModeView x:Name="StageShunt" Visibility="Collapsed"/>
                 <macro:MacroTimelineView x:Name="StageCombo" Visibility="Collapsed"/>
                 <radial:RadialMenuDesignerView x:Name="StageRadial" Visibility="Collapsed"/>
                 <Border x:Name="StageCrosshair" Visibility="Collapsed">

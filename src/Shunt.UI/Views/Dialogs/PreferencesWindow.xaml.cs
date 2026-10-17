@@ -5,6 +5,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Win32;
 using Shunt.Engine;
+using Shunt.UI.Services;
 
 namespace Shunt.UI.Views.Dialogs;
 
@@ -40,6 +41,13 @@ public partial class PreferencesWindow : Window
             HidHideStatusText.Text = "Status: NOT INSTALLED (Fallback In-Memory Stub)";
             HidHideStatusText.Foreground = (System.Windows.Media.Brush)FindResource("StatusWarningBrush");
         }
+
+        // General tab toggles backed by persisted settings
+        NotificationsToggle.IsChecked = AppSettings.Current.ControllerNotificationsEnabled;
+        TrayToggle.IsChecked = AppSettings.Current.MinimizeToTray;
+
+        // Appearance tab theme combo selection
+        ThemeCombo.SelectedIndex = App.CurrentTheme == App.AimXPTheme ? 1 : 0;
     }
 
     private void OnAddWhitelistApp(object sender, RoutedEventArgs e)
@@ -70,13 +78,17 @@ public partial class PreferencesWindow : Window
 
     private void OnThemeChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (ThemeCombo == null) return;
+        if (ThemeCombo == null || !IsLoaded) return;
         bool aimXp = ThemeCombo.SelectedIndex == 1;
         App.ApplyTheme(aimXp ? App.AimXPTheme : App.BaseTemplateTheme);
     }
 
     private void OnSaveClick(object sender, RoutedEventArgs e)
     {
+        AppSettings.Current.ControllerNotificationsEnabled = NotificationsToggle.IsChecked == true;
+        AppSettings.Current.MinimizeToTray = TrayToggle.IsChecked == true;
+        AppSettings.Current.Theme = ThemeCombo.SelectedIndex == 1 ? App.AimXPTheme : App.BaseTemplateTheme;
+        AppSettings.Current.Save();
         DialogResult = true;
         Close();
     }

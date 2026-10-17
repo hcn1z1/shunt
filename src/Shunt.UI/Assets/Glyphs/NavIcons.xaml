@@ -93,4 +93,11 @@
         <Ellipse Canvas.Left="7.4" Canvas.Top="7.4" Width="3.2" Height="3.2" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/>
     </Canvas>
 
+    <Canvas x:Key="IconShunt" Width="18" Height="18">
+        <Path Data="M 10.5,1.5 L 4.5,9.5 L 9,9.5 L 7.5,16.5 L 13.5,8.5 L 9,8.5 Z"
+              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+              Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+              StrokeThickness="1.1"/>
+    </Canvas>
+
 </ResourceDictionary>

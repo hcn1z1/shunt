@@ -193,7 +193,23 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
             }
             else if (!_gesturePumpRunning)
             {
-                SubmitStandardReport(state);
+                if (_extendedTouchpadDisabled)
+                {
+                    SubmitStandardReport(state);
+                }
+                else
+                {
+                    try
+                    {
+                        SubmitExtendedReport(state, default, default);
+                    }
+                    catch (Exception ex)
+                    {
+                        TouchpadOutputError = ex.Message;
+                        _extendedTouchpadDisabled = true;
+                        SubmitStandardReport(state);
+                    }
+                }
             }
         }
 

@@ -15,6 +15,7 @@ public sealed class XboxToDualShock4ShuntService
     private bool _gyroToggledOn;
     private bool _backHadPartner;
     private GamepadButtons _activeSwipe;
+    private bool _leftStickTiltActive;
 
     public GyroActivatorMode ActivationMode { get; set; } = GyroActivatorMode.Toggle;
     public bool IsGyroEnabled { get; private set; }
@@ -63,48 +64,140 @@ public sealed class XboxToDualShock4ShuntService
 
         outputButtons = ResolveTouchpadChords(input, outputButtons);
         var outputRightStick = input.RightStick;
+        var outputLeftStick = input.LeftStick;
+
         if ((buttons & GamepadButtons.Back) != 0 &&
             MathF.Sqrt(input.RightStick.X * input.RightStick.X + input.RightStick.Y * input.RightStick.Y) >= 0.30f)
             outputRightStick = StickPosition.Center;
+
+        var backDown = (buttons & GamepadButtons.Back) != 0;
+        var leftStickMag = MathF.Sqrt(input.LeftStick.X * input.LeftStick.X + input.LeftStick.Y * input.LeftStick.Y);
+        var rightStickMag = MathF.Sqrt(input.RightStick.X * input.RightStick.X + input.RightStick.Y * input.RightStick.Y);
+        bool isLeftStickGyroActive = false;
+        bool isRightStickGyroActive = false;
+
+        // Activate gyro tilt whenever Back is held + Left Stick moves, or when gyro is enabled on standard Xbox controllers
+        if (backDown && leftStickMag >= 0.15f)
+        {
+            isLeftStickGyroActive = true;
+            _backHadPartner = true;
+            outputLeftStick = StickPosition.Center;
+            if (!_leftStickTiltActive)
+            {
+                _leftStickTiltActive = true;
+                TouchpadActionChanged?.Invoke("Left stick gyro tilt");
+            }
+        }
+        else
+        {
+            _leftStickTiltActive = false;
+            if (IsGyroEnabled && imuSample == null)
+            {
+                if (leftStickMag >= 0.08f)
+                {
+                    isLeftStickGyroActive = true;
+                    outputLeftStick = StickPosition.Center;
+                }
+                else if (rightStickMag >= 0.08f)
+                {
+                    isRightStickGyroActive = true;
+                    outputRightStick = StickPosition.Center;
+                }
+            }
+        }
+
+        float pitchAngle = 0f;
+        float rollAngle = 0f;
+        float gyroVelX = 0f;
+        float gyroVelY = 0f;
+        float gyroVelZ = 0f;
+        float accelX = 0f;
+        float accelY = 0f;
+        float accelZ = 1.0f;
+
+        if (isLeftStickGyroActive)
+        {
+            pitchAngle = input.LeftStick.Y * 45f;
+            rollAngle = input.LeftStick.X * 45f;
+            float pitchRad = pitchAngle * (MathF.PI / 180f);
+            float rollRad = rollAngle * (MathF.PI / 180f);
+
+            accelX = MathF.Sin(rollRad) * MathF.Cos(pitchRad);
+            accelY = -MathF.Sin(pitchRad);
+            accelZ = MathF.Cos(rollRad) * MathF.Cos(pitchRad);
+
+            gyroVelX = input.LeftStick.Y * 180f;
+            gyroVelY = input.LeftStick.X * 180f;
+            gyroVelZ = input.LeftStick.X * 180f;
+        }
+        else if (isRightStickGyroActive)
+        {
+            pitchAngle = input.RightStick.Y * 45f;
+            rollAngle = input.RightStick.X * 45f;
+            float pitchRad = pitchAngle * (MathF.PI / 180f);
+            float rollRad = rollAngle * (MathF.PI / 180f);
+
+            accelX = MathF.Sin(rollRad) * MathF.Cos(pitchRad);
+            accelY = -MathF.Sin(pitchRad);
+            accelZ = MathF.Cos(rollRad) * MathF.Cos(pitchRad);
+
+            gyroVelX = input.RightStick.Y * 180f;
+            gyroVelY = input.RightStick.X * 180f;
+            gyroVelZ = input.RightStick.X * 180f;
+        }
+        else if (imuSample is { } sample)
+        {
+            gyroVelX = IsGyroEnabled ? sample.GyroX : 0f;
+            // Vendor report order is pitch, roll, yaw; DS4 expects pitch, yaw, roll.
+            gyroVelY = IsGyroEnabled ? sample.GyroZ : 0f;
+            gyroVelZ = IsGyroEnabled ? sample.GyroY : 0f;
+            accelX = sample.AccelX;
+            accelY = sample.AccelY;
+            accelZ = sample.AccelZ;
+            pitchAngle = MathF.Atan2(-accelY, MathF.Sqrt(accelX * accelX + accelZ * accelZ)) * (180f / MathF.PI);
+            rollAngle = MathF.Atan2(accelX, accelZ == 0 ? 0.001f : accelZ) * (180f / MathF.PI);
+        }
+        else
+        {
+            gyroVelX = IsGyroEnabled ? input.GyroVelX : 0f;
+            gyroVelY = IsGyroEnabled ? input.GyroVelY : 0f;
+            gyroVelZ = IsGyroEnabled ? input.GyroVelZ : 0f;
+            accelX = input.AccelX;
+            accelY = input.AccelY;
+            accelZ = input.AccelZ == 0f ? 1.0f : input.AccelZ;
+        }
+
         _previousGyroChord = chordFormed;
         _previousButtons = buttons;
-
-        if (imuSample is { } sample)
-        {
-            return input with
-            {
-                Buttons = outputButtons,
-                RightStick = outputRightStick,
-                GyroVelX = IsGyroEnabled ? sample.GyroX : 0f,
-                // Vendor report order is pitch, roll, yaw; DS4 expects pitch, yaw, roll.
-                GyroVelY = IsGyroEnabled ? sample.GyroZ : 0f,
-                GyroVelZ = IsGyroEnabled ? sample.GyroY : 0f,
-                AccelX = sample.AccelX,
-                AccelY = sample.AccelY,
-                AccelZ = sample.AccelZ
-            };
-        }
 
         return input with
         {
             Buttons = outputButtons,
+            LeftStick = outputLeftStick,
             RightStick = outputRightStick,
-            GyroVelX = IsGyroEnabled ? input.GyroVelX : 0f,
-            GyroVelY = IsGyroEnabled ? input.GyroVelY : 0f,
-            GyroVelZ = IsGyroEnabled ? input.GyroVelZ : 0f
+            GyroPitch = pitchAngle,
+            GyroRoll = rollAngle,
+            GyroYaw = 0f,
+            GyroVelX = gyroVelX,
+            GyroVelY = gyroVelY,
+            GyroVelZ = gyroVelZ,
+            AccelX = accelX,
+            AccelY = accelY,
+            AccelZ = accelZ
         };
     }
 
-    public void Reset()
+    public void Reset(bool defaultGyroEnabled = false)
     {
         _previousButtons = GamepadButtons.None;
         _leftThumbPressedAt = null;
         _rightThumbPressedAt = null;
         _previousGyroChord = false;
-        _gyroToggledOn = false;
+        _gyroToggledOn = defaultGyroEnabled;
         _backHadPartner = false;
         _activeSwipe = GamepadButtons.None;
-        SetGyroEnabled(false);
+        _leftStickTiltActive = false;
+        SetGyroEnabled(defaultGyroEnabled);
     }
 
     private GamepadButtons ResolveTouchpadChords(GamepadState input, GamepadButtons outputButtons)
@@ -181,10 +274,11 @@ public sealed class XboxToDualShock4ShuntService
         return outputButtons;
     }
 
-    private void SetGyroEnabled(bool enabled)
+    public void SetGyroEnabled(bool enabled)
     {
         if (IsGyroEnabled == enabled) return;
         IsGyroEnabled = enabled;
+        _gyroToggledOn = enabled;
         GyroStateChanged?.Invoke(enabled);
     }
 }

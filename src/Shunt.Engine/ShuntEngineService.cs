@@ -41,7 +41,9 @@ public class ShuntEngineService : IDisposable
     public bool IsRunning { get; private set; }
     public bool IsShuntModeEnabled { get; private set; }
     public bool IsShuntGyroEnabled => _shuntRuntime.IsGyroEnabled;
+    public bool IsGyroEnabled => IsShuntGyroEnabled;
     public bool IsDsuServerEnabled => _dsuServer?.IsRunning == true;
+    public bool IsDsuRunning => IsDsuServerEnabled;
     public string? LastTouchpadAction { get; private set; }
     public DateTimeOffset? LastTouchpadActionAt { get; private set; }
     public int CurrentSlot { get; private set; } = 0;
@@ -59,12 +61,22 @@ public class ShuntEngineService : IDisposable
     public event Action<bool>? ShuntGyroStateChanged;
     public event Action<string>? ShuntTouchpadActionChanged;
     public event Action<string>? ShuntModeError;
+    public event Action<Hardware.ChipFlashResult>? ChipSyncStatusChanged;
+    public bool AutoSyncChipOnGyroToggle { get; set; } = true;
 
     /// <summary>Last formatted HID output report for the active virtual target (diagnostics).</summary>
     public byte[]? LastOutputReport { get; private set; }
 
     /// <summary>Target of the currently active virtual controller.</summary>
     public VirtualControllerTarget ActiveTarget { get; private set; } = VirtualControllerTarget.The360;
+
+    public float CurrentPitch { get; private set; }
+    public float CurrentRoll { get; private set; }
+    public float CurrentYaw { get; private set; }
+    public float CurrentAngularVelocity { get; private set; }
+    public float CurrentGravityG { get; private set; } = 1.0f;
+    public int ActiveXInputSlot { get; private set; } = -1;
+    public bool HasHardwareImuActive => OperatingSystem.IsWindows() && _activeImuPoller != null && _activeImuPoller.IsRunning;
 
     public ShuntEngineService(IVirtualGamepadManager gamepadManager, IHardwareDiscoveryService? hardwareDiscovery = null, IHidHideService? hidHideService = null)
     {
@@ -81,6 +93,8 @@ public class ShuntEngineService : IDisposable
         {
             _hardwareDiscovery.SelectedController.InputReceived += OnHardwareInputReceived;
         }
+        _shuntRuntime.GyroStateChanged += OnShuntGyroStateChanged;
+        _shuntRuntime.TouchpadActionChanged += OnShuntTouchpadActionChanged;
     }
 
     private void OnSelectedControllerChanged(IHardwareController? controller)
@@ -138,8 +152,6 @@ public class ShuntEngineService : IDisposable
         IsRunning = true;
         _hardwareDiscovery.Start();
         _hardwareDiscovery.SelectedController?.StartPolling();
-        _shuntRuntime.GyroStateChanged += OnShuntGyroStateChanged;
-        _shuntRuntime.TouchpadActionChanged += OnShuntTouchpadActionChanged;
     }
 
     /// <summary>
@@ -246,12 +258,41 @@ public class ShuntEngineService : IDisposable
         _hardwareDiscovery.SelectedController?.Vibrate(leftMotor, rightMotor);
     }
 
+    /// <summary>Programmatically sets the Shunt gyro state, triggering haptic feedback and dynamic chip sync.</summary>
+    public void SetShuntGyroEnabled(bool enabled) => _shuntRuntime.SetGyroEnabled(enabled);
+
     /// <summary>Starts Xbox-to-DS4 runtime filtering after the UI completes the hardware check.</summary>
     public bool EnableShuntMode(GyroActivatorMode activationMode = GyroActivatorMode.Toggle)
     {
-        if (!IsRunning || _activeVirtualGamepad?.Type != VirtualGamepadType.DualShock4) return false;
+        if (_activeVirtualGamepad?.Type != VirtualGamepadType.DualShock4)
+        {
+            if (_activeVirtualGamepad != null)
+            {
+                StopVirtualGamepad();
+            }
+            try
+            {
+                _activeVirtualGamepad = _gamepadManager.CreateGamepad(VirtualGamepadType.DualShock4);
+                _activeVirtualGamepad.FeedbackReceived += OnVirtualGamepadFeedback;
+                _activeVirtualGamepad.Connect();
+                ActiveTarget = VirtualControllerTarget.Ds4;
+                if (_pipeline == null)
+                {
+                    var ctx = new MappingExecutionContext
+                    {
+                        CommandDispatcher = _commandDispatcher
+                    };
+                    _pipeline = new MappingPipeline(ctx);
+                }
+                IsRunning = true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
         _shuntRuntime.ActivationMode = activationMode;
-        _shuntRuntime.Reset();
+        _shuntRuntime.Reset(defaultGyroEnabled: true);
         lock (_imuLock) _latestShuntInput = new GamepadState();
         IsShuntModeEnabled = true;
         StartShuntFrameLoop();
@@ -268,17 +309,28 @@ public class ShuntEngineService : IDisposable
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-    public async Task<bool> StartShuntModeAsync(HardwareImuDevice device, GyroActivatorMode activationMode = GyroActivatorMode.Toggle)
+    public async Task<bool> StartShuntModeAsync(HardwareImuDevice? device, GyroActivatorMode activationMode = GyroActivatorMode.Toggle)
     {
-        ArgumentNullException.ThrowIfNull(device);
         if (!EnableShuntMode(activationMode)) return false;
+
+        // Auto-start Cemuhook DSU motion server so ShadPS4 / emulators receive motion on UDP 26760 immediately
+        StartDsuServer();
+
         if (!TryEnableDeviceIsolation())
         {
-            DisableShuntMode();
-            ShuntModeError?.Invoke("HidHide is unavailable or the selected physical controller could not be cloaked.");
-            return false;
+            ShuntModeError?.Invoke("Notice: Physical controller cloaking (HidHide) is inactive or non-elevated. Shunt Mode will continue without device isolation.");
         }
         await StopImuPollerAsync().ConfigureAwait(false);
+
+        // Always ensure the physical controller input polling is active
+        _hardwareDiscovery.Start();
+        _hardwareDiscovery.SelectedController?.StartPolling();
+
+        if (device is null)
+        {
+            // Shunt Mode active with Left Stick simulated gyro for any standard Xbox controller
+            return true;
+        }
 
         var poller = device.CreatePoller();
         poller.SampleReceived += UpdateImuSample;
@@ -295,9 +347,9 @@ public class ShuntEngineService : IDisposable
             poller.Faulted -= OnImuPollerFaulted;
             await poller.DisposeAsync().ConfigureAwait(false);
             _activeImuPoller = null;
-            DisableShuntMode();
-            ShuntModeError?.Invoke(ex.Message);
-            return false;
+            // Graceful fallback to virtual motion mode if the hardware HID endpoint cannot be read directly
+            ShuntModeError?.Invoke($"Hardware IMU reader failed ({ex.Message}). Operating in virtual Left Stick gyro mode.");
+            return true;
         }
     }
 
@@ -305,7 +357,8 @@ public class ShuntEngineService : IDisposable
     {
         var controller = _hardwareDiscovery.SelectedController;
         var hider = _hidHideService;
-        if (controller is null || hider is null || !hider.IsAvailable) return false;
+        if (hider is null || !hider.IsAvailable) return true;
+        if (controller is null) return true;
         var executable = Process.GetCurrentProcess().MainModule?.FileName;
         if (string.IsNullOrWhiteSpace(executable) || !hider.AddApplicationWhitelist(executable)) return false;
 
@@ -342,6 +395,10 @@ public class ShuntEngineService : IDisposable
         _shuntFrameCts?.Dispose();
         _shuntFrameCts = null;
         await StopImuPollerAsync().ConfigureAwait(false);
+        if (AutoSyncChipOnGyroToggle)
+        {
+            try { _ = FlashGameSirChipAsync(Hardware.GameSirGyroTargetStick.LeftStick, alwaysActive: false); } catch { }
+        }
     }
 
     private void StartShuntFrameLoop()
@@ -356,6 +413,7 @@ public class ShuntEngineService : IDisposable
     {
         try
         {
+            var rawXState = new Hardware.XInputNative.XINPUT_STATE();
             while (!cancellationToken.IsCancellationRequested && IsRunning && IsShuntModeEnabled)
             {
                 GamepadState input;
@@ -366,9 +424,38 @@ public class ShuntEngineService : IDisposable
                     sample = _latestImuSample;
                 }
 
+                if (OperatingSystem.IsWindows())
+                {
+                    int detectedSlot = -1;
+                    for (uint slot = 0; slot < 4; slot++)
+                    {
+                        if (Hardware.XInputNative.GetState(slot, ref rawXState) == Hardware.XInputNative.ERROR_SUCCESS)
+                        {
+                            detectedSlot = (int)slot;
+                            var converted = Hardware.XInputHardwareController.ConvertState(rawXState.Gamepad);
+                            if (converted.LeftStick.X != 0f || converted.LeftStick.Y != 0f ||
+                                converted.RightStick.X != 0f || converted.RightStick.Y != 0f ||
+                                converted.Buttons != GamepadButtons.None ||
+                                (input.LeftStick.X == 0f && input.LeftStick.Y == 0f && input.Buttons == GamepadButtons.None))
+                            {
+                                input = converted;
+                            }
+                            break;
+                        }
+                    }
+                    ActiveXInputSlot = detectedSlot;
+                }
+
                 var output = _shuntRuntime.Process(input, Environment.TickCount64, sample);
                 _activeVirtualGamepad?.UpdateState(output);
                 _dsuServer?.UpdateState(output);
+
+                CurrentPitch = output.GyroPitch;
+                CurrentRoll = output.GyroRoll;
+                CurrentYaw = output.GyroYaw;
+                CurrentAngularVelocity = MathF.Sqrt(output.GyroVelX * output.GyroVelX + output.GyroVelY * output.GyroVelY + output.GyroVelZ * output.GyroVelZ);
+                CurrentGravityG = MathF.Sqrt(output.AccelX * output.AccelX + output.AccelY * output.AccelY + output.AccelZ * output.AccelZ);
+
                 await Task.Delay(4, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -402,6 +489,22 @@ public class ShuntEngineService : IDisposable
     {
         ShuntGyroStateChanged?.Invoke(enabled);
         PlayGyroHapticFeedback(enabled);
+
+        if (AutoSyncChipOnGyroToggle)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var result = await FlashGameSirChipAsync(Hardware.GameSirGyroTargetStick.LeftStick, alwaysActive: enabled).ConfigureAwait(false);
+                    ChipSyncStatusChanged?.Invoke(result);
+                }
+                catch (Exception ex)
+                {
+                    ChipSyncStatusChanged?.Invoke(new Hardware.ChipFlashResult(false, $"Auto chip sync failed: {ex.Message}", 0));
+                }
+            });
+        }
     }
 
     private void PlayGyroHapticFeedback(bool enabled)
@@ -476,14 +579,22 @@ public class ShuntEngineService : IDisposable
         if (server is not null) await server.DisposeAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Writes gyro mapping configuration directly to the GameSir G7 Pro onboard chip (Profile 1).
+    /// </summary>
+    public async Task<ChipFlashResult> FlashGameSirChipAsync(GameSirGyroTargetStick stick = GameSirGyroTargetStick.LeftStick, bool alwaysActive = true, IProgress<int>? progress = null, CancellationToken ct = default)
+    {
+        var res = await GameSirG7ProChipWriter.FlashProfileToChipAsync(stick, alwaysActive, progress, ct).ConfigureAwait(false);
+        ChipSyncStatusChanged?.Invoke(res);
+        return res;
+    }
+
     private void StopVirtualGamepad()
     {
         if (OperatingSystem.IsWindows())
             StopShuntModeAsync().GetAwaiter().GetResult();
         else
             DisableShuntMode();
-        _shuntRuntime.GyroStateChanged -= OnShuntGyroStateChanged;
-        _shuntRuntime.TouchpadActionChanged -= OnShuntTouchpadActionChanged;
         if (_activeVirtualGamepad != null)
         {
             _activeVirtualGamepad.FeedbackReceived -= OnVirtualGamepadFeedback;

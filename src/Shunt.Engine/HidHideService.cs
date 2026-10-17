@@ -30,7 +30,7 @@ public sealed class HidHideService : IHidHideService, IDisposable
     private const uint IOCTL_SET_ACTIVE    = 0x80016014;
     private const uint IOCTL_GET_INVERSE   = 0x80016018;
     private const uint IOCTL_SET_INVERSE   = 0x8001601C;
-    private const int DriverListBufferSize = 1024 * 1024;
+    private const int DriverListBufferSize = 8192;
     private readonly object _settingsLock = new();
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -110,11 +110,24 @@ public sealed class HidHideService : IHidHideService, IDisposable
     {
         try
         {
-            var handle = CreateFileW(ControlDevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-            if (handle != IntPtr.Zero && handle != (IntPtr)(-1))
+            var handle = CreateFileW(ControlDevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+            if (handle == IntPtr.Zero || handle == (IntPtr)(-1)) return false;
+            try
+            {
+                var buffer = Marshal.AllocHGlobal(256);
+                try
+                {
+                    if (DeviceIoControl(handle, IOCTL_GET_WHITELIST, IntPtr.Zero, 0, buffer, 256, out _, IntPtr.Zero))
+                        return true;
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(buffer);
+                }
+            }
+            finally
             {
                 CloseHandle(handle);
-                return true;
             }
         }
         catch
@@ -148,7 +161,8 @@ public sealed class HidHideService : IHidHideService, IDisposable
         {
             if (!_driverAvailable || !OperatingSystem.IsWindows()) return _inMemoryWhitelist.Remove(fullPath);
             if (!TryReadStringList(IOCTL_GET_WHITELIST, out var current)) return false;
-            current.RemoveAll(item => item.Equals(fullPath, StringComparison.OrdinalIgnoreCase));
+            current.RemoveAll(item => item.Equals(fullPath, StringComparison.OrdinalIgnoreCase) ||
+                                      ToDosPath(item).Equals(applicationPath, StringComparison.OrdinalIgnoreCase));
             if (!WriteStringList(IOCTL_SET_WHITELIST, current)) return false;
             _inMemoryWhitelist.Clear();
             foreach (var item in current) _inMemoryWhitelist.Add(item);
@@ -159,9 +173,12 @@ public sealed class HidHideService : IHidHideService, IDisposable
     public IReadOnlyList<string> GetWhitelistedApplications()
     {
         lock (_settingsLock)
-            return _driverAvailable && OperatingSystem.IsWindows()
+        {
+            var list = _driverAvailable && OperatingSystem.IsWindows()
                 ? ReadStringList(IOCTL_GET_WHITELIST, _inMemoryWhitelist)
                 : [.. _inMemoryWhitelist];
+            return list.Select(ToDosPath).ToList();
+        }
     }
 
     public bool BlockDevice(string deviceInstancePath)
@@ -301,7 +318,28 @@ public sealed class HidHideService : IHidHideService, IDisposable
         if (string.IsNullOrEmpty(root) || root.Length < 2 || root[1] != ':') return path;
         var target = new StringBuilder(1024);
         if (QueryDosDeviceW(root[..2], target, target.Capacity) == 0) return path;
-        return target.ToString().TrimEnd('\\') + path[root.Length..];
+        var relative = path[root.Length..].TrimStart('\\');
+        return target.ToString().TrimEnd('\\') + "\\" + relative;
+    }
+
+    private static string ToDosPath(string path)
+    {
+        if (!OperatingSystem.IsWindows() || !path.StartsWith(@"\Device\", StringComparison.OrdinalIgnoreCase)) return path;
+        foreach (var drive in Environment.GetLogicalDrives())
+        {
+            var letter = drive.TrimEnd('\\');
+            var target = new StringBuilder(1024);
+            if (QueryDosDeviceW(letter, target, target.Capacity) != 0)
+            {
+                var prefix = target.ToString();
+                if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var remainder = path[prefix.Length..].TrimStart('\\');
+                    return letter + "\\" + remainder;
+                }
+            }
+        }
+        return path;
     }
 
     public void Dispose()

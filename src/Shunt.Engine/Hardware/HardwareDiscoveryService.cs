@@ -169,10 +169,21 @@ public sealed class HardwareDiscoveryService : IHardwareDiscoveryService
                 }
             }
 
-            // If selected controller was removed or null, select first available
+            // If any PnpHardwareController has no poller or default state, attach an available XInput controller
+            foreach (var pnp in _controllers.OfType<PnpHardwareController>())
+            {
+                if (xinputControllers.Count > 0)
+                {
+                    pnp.AttachPoller(xinputControllers[0]);
+                }
+            }
+
+            // If selected controller was removed, null, or has default state, select active controller
             if (_selectedController == null || !_controllers.Contains(_selectedController))
             {
-                SelectedController = _controllers.FirstOrDefault();
+                SelectedController = _controllers.FirstOrDefault(c => c is XInputHardwareController) 
+                                     ?? _controllers.FirstOrDefault(c => c is PnpHardwareController) 
+                                     ?? _controllers.FirstOrDefault();
             }
         }
 

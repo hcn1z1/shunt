@@ -11,6 +11,10 @@ public partial class App : Application
     public const string BaseTemplateTheme = "BaseTemplate";
     public const string AimXPTheme = "AimXP";
 
+    public static string CurrentTheme { get; private set; } = BaseTemplateTheme;
+
+    public static event EventHandler<string>? ThemeChanged;
+
     /// <summary>
     /// Swaps the active color dictionary between the BaseTemplate (classic dark)
     /// and AimXP (midnight neon) palettes. Control templates resolve their
@@ -18,8 +22,9 @@ public partial class App : Application
     /// </summary>
     public static void ApplyTheme(string themeName)
     {
+        CurrentTheme = themeName == AimXPTheme ? AimXPTheme : BaseTemplateTheme;
         if (Current?.Resources is not ResourceDictionary appResources) return;
-        var source = themeName == AimXPTheme
+        var source = CurrentTheme == AimXPTheme
             ? new Uri("Themes/AimXP/Colors.xaml", UriKind.Relative)
             : new Uri("Themes/BaseTemplate/Colors.xaml", UriKind.Relative);
 
@@ -33,6 +38,7 @@ public partial class App : Application
                 merged.RemoveAt(index);
         }
         merged.Insert(0, new ResourceDictionary { Source = source });
+        ThemeChanged?.Invoke(null, CurrentTheme);
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -47,7 +53,44 @@ public partial class App : Application
             LogFatalCrash(args.Exception, "WPF Dispatcher Unhandled Exception");
         };
 
+        if (!string.IsNullOrEmpty(Services.AppSettings.Current.Theme))
+        {
+            ApplyTheme(Services.AppSettings.Current.Theme);
+        }
+
         base.OnStartup(e);
+    }
+
+    private static Shunt.Engine.ShuntEngineService? _localEngine;
+    public static Shunt.Engine.ShuntEngineService LocalEngine
+    {
+        get
+        {
+            if (_localEngine == null)
+            {
+                Shunt.Core.Interfaces.IVirtualGamepadManager manager;
+                try
+                {
+                    manager = new Shunt.Emulation.ViGEmGamepadManager();
+                }
+                catch
+                {
+                    manager = new Shunt.Emulation.StubVirtualGamepadManager();
+                }
+                _localEngine = new Shunt.Engine.ShuntEngineService(manager);
+            }
+            return _localEngine;
+        }
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        if (_localEngine != null && OperatingSystem.IsWindows())
+        {
+            try { _localEngine.StopShuntModeAsync().GetAwaiter().GetResult(); } catch { }
+            try { _localEngine.Dispose(); } catch { }
+        }
+        base.OnExit(e);
     }
 
     private static void LogFatalCrash(Exception? ex, string source)

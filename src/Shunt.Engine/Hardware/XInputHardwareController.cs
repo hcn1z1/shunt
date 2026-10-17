@@ -111,7 +111,7 @@ public sealed class XInputHardwareController : IHardwareController
         }
     }
 
-    private static GamepadState ConvertState(XInputNative.XINPUT_GAMEPAD pad)
+    public static GamepadState ConvertState(XInputNative.XINPUT_GAMEPAD pad)
     {
         var buttons = GamepadButtons.None;
         if ((pad.wButtons & XInputNative.XINPUT_GAMEPAD_A) != 0) buttons |= GamepadButtons.A;

@@ -38,7 +38,8 @@
                 <TabItem Header="General">
                     <StackPanel Margin="8,16">
                         <CheckBox Content="Launch Shunt on Windows startup" IsChecked="True" Style="{StaticResource MasterToggleStyle}" Margin="0,0,0,16"/>
-                        <CheckBox Content="Minimize to Windows notification area (System Tray)" IsChecked="True" Margin="0,0,0,16"/>
+                        <CheckBox x:Name="TrayToggle" Content="Minimize to Windows notification area (System Tray)" IsChecked="True" Margin="0,0,0,16"/>
+                        <CheckBox x:Name="NotificationsToggle" Content="Show Windows notifications when controllers connect or disconnect" IsChecked="True" Margin="0,0,0,16"/>
                         <CheckBox Content="Auto-switch profiles when game processes become active" IsChecked="True" Margin="0,0,0,20"/>
 
                         <TextBlock Text="Hardware Input Polling Rate" Style="{StaticResource BodyBoldText}" Margin="0,0,0,6"/>
@@ -103,7 +104,7 @@
                     <StackPanel Margin="8,16">
                         <TextBlock Text="Color Theme" Style="{StaticResource BodyBoldText}" Margin="0,0,0,6"/>
                         <ComboBox x:Name="ThemeCombo" Width="260" HorizontalAlignment="Left" Margin="0,0,0,16" SelectionChanged="OnThemeChanged">
-                            <ComboBoxItem Content="BaseTemplate (Carbon &amp; Cream Dark)" IsSelected="True"/>
+                            <ComboBoxItem Content="BaseTemplate (Carbon &amp; Cream Dark)"/>
                             <ComboBoxItem Content="AimXP (Cyberpunk Midnight &amp; Cyan)"/>
                         </ComboBox>
 

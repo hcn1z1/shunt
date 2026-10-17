@@ -32,6 +32,10 @@ public partial class MainWindow : Window
     private bool _isDetectionModeActive;
     private CancellationTokenSource? _detectionCts;
     private EngineEventClient? _eventClient;
+    private TrayIconService? _trayIcon;
+    private bool _trayHintShown;
+    private static System.Diagnostics.Process? _spawnedEngineProcess;
+    private readonly Dictionary<string, string> _controllerNames = new(StringComparer.OrdinalIgnoreCase);
     private System.Windows.Threading.DispatcherTimer? _deviceRefreshTimer;
     private JsonObject? _profile;
     private string? _profilePath;
@@ -80,6 +84,33 @@ public partial class MainWindow : Window
         BindingFrame.CloseRequested += (_, _) => ToggleBindingFrame(false);
         BindingFrame.SetChordPartners(InputSources.Where(source => source.Category == "Gamepad"));
         StageGyro.SettingsChanged += StageGyro_SettingsChanged;
+        _isAimXpTheme = App.CurrentTheme == App.AimXPTheme;
+        ThemeSwitchButton.Content = _isAimXpTheme ? "Theme: AimXP" : "Theme: Dark";
+        App.ThemeChanged += (_, theme) =>
+        {
+            _isAimXpTheme = theme == App.AimXPTheme;
+            ThemeSwitchButton.Content = _isAimXpTheme ? "Theme: AimXP" : "Theme: Dark";
+        };
+
+        App.LocalEngine.ShuntGyroStateChanged += gyroEnabled =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (ShuntLiveIndicator.Visibility == Visibility.Visible)
+                {
+                    ShuntLiveTitle.Text = gyroEnabled ? "SHUNT GYRO: STREAMING" : "SHUNT GYRO: PAUSED";
+                    ShuntLiveTitle.Foreground = gyroEnabled ? (Brush)FindResource("StatusSuccessBrush") : (Brush)FindResource("TextMutedBrush");
+                    ShuntLiveDot.Fill = gyroEnabled ? (Brush)FindResource("StatusSuccessBrush") : (Brush)FindResource("StatusWarningBrush");
+                    SetFooter(gyroEnabled ? "Shunt Gyro: STREAMING" : "Shunt Gyro: PAUSED (press L3+R3 to unpause)");
+                }
+            });
+        };
+
+        App.LocalEngine.ShuntTouchpadActionChanged += action =>
+        {
+            if (!string.IsNullOrWhiteSpace(action))
+                Dispatcher.Invoke(() => SetFooter($"Shunt Touchpad: {action}"));
+        };
     }
 
     private static readonly Dictionary<string, string[]> CanvasButtonAliases =
@@ -91,12 +122,113 @@ public partial class MainWindow : Window
         _eventClient = new EngineEventClient(EngineAddress, Dispatcher);
         _eventClient.KeyPressedReceived += OnSseKeyPressed;
         _eventClient.VibrationFeedbackReceived += OnSseVibrationFeedback;
+        _eventClient.ControllerConnectionChanged += OnControllerConnectionChanged;
+        _eventClient.EventReceived += OnSseEventReceived;
         _eventClient.Start();
+    }
+
+    private void OnSseEventReceived(string eventType, string json)
+    {
+        if (string.Equals(eventType, "ShuntModeChanged", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                bool enabled = doc.RootElement.TryGetProperty("Enabled", out var ep) && ep.GetBoolean();
+                bool gyro = doc.RootElement.TryGetProperty("GyroEnabled", out var gp) && gp.GetBoolean();
+                UpdateShuntIndicator(enabled, gyro);
+            }
+            catch { }
+        }
+        else if (string.Equals(eventType, "ShuntGyroStateChanged", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                bool gyroEnabled = doc.RootElement.TryGetProperty("Enabled", out var gp) && gp.GetBoolean();
+                Dispatcher.Invoke(() =>
+                {
+                    if (ShuntLiveIndicator.Visibility == Visibility.Visible)
+                    {
+                        ShuntLiveTitle.Text = gyroEnabled ? "SHUNT GYRO: STREAMING" : "SHUNT GYRO: PAUSED";
+                        ShuntLiveTitle.Foreground = gyroEnabled ? (Brush)FindResource("StatusSuccessBrush") : (Brush)FindResource("TextMutedBrush");
+                        ShuntLiveDot.Fill = gyroEnabled ? (Brush)FindResource("StatusSuccessBrush") : (Brush)FindResource("StatusWarningBrush");
+                        SetFooter(gyroEnabled ? "Shunt Gyro: STREAMING" : "Shunt Gyro: PAUSED (press L3+R3 to unpause)");
+                    }
+                });
+            }
+            catch { }
+        }
+        else if (string.Equals(eventType, "ShuntTouchpadAction", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var action = doc.RootElement.TryGetProperty("Action", out var ap) ? ap.GetString() : null;
+                if (!string.IsNullOrWhiteSpace(action))
+                {
+                    Dispatcher.Invoke(() => SetFooter($"Shunt Touchpad: {action}"));
+                }
+            }
+            catch { }
+        }
+    }
+
+    private void UpdateShuntIndicator(bool enabled, bool gyro = false)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (enabled)
+            {
+                ShuntLiveIndicator.Visibility = Visibility.Visible;
+                ShuntLiveTitle.Text = gyro ? "SHUNT GYRO: STREAMING" : "SHUNT MODE: ACTIVE";
+                ShuntLiveTitle.Foreground = (Brush)FindResource("StatusSuccessBrush");
+                ShuntLiveDot.Fill = (Brush)FindResource("StatusSuccessBrush");
+                ShuntLiveDetails.Text = " · DS4 + DSU (UDP 26760)";
+                SetFooter("Shunt Mode ACTIVE: Virtual DualShock 4 connected · DSU motion on UDP 26760 · Hold Back + Left Stick to tilt");
+            }
+            else
+            {
+                ShuntLiveIndicator.Visibility = Visibility.Collapsed;
+            }
+        });
+    }
+
+    private void ShuntLiveIndicator_Click(object sender, RoutedEventArgs e)
+    {
+        NavShuntItem.IsChecked = true;
     }
 
     private void OnSseVibrationFeedback(VibrationFeedbackEvent evt)
     {
         GamepadCanvas.ShowVibrationToast(evt.LargeMotor, evt.SmallMotor, evt.LedNumber);
+    }
+
+    private void OnControllerConnectionChanged(ControllerConnectionEvent evt)
+    {
+        if (evt.IsConnected)
+        {
+            _controllerNames[evt.Id] = evt.Name;
+            var detailParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(evt.ConnectionType)) detailParts.Add(evt.ConnectionType);
+            if (evt.BatteryLevel is >= 0 and <= 100) detailParts.Add($"battery {evt.BatteryLevel}%");
+            var detail = detailParts.Count == 0 ? string.Empty : $" ({string.Join(" · ", detailParts)})";
+            SetFooter($"{evt.Name} connected{detail}.");
+            if (AppSettings.Current.ControllerNotificationsEnabled)
+                _trayIcon?.ShowNotification("Controller connected", $"{evt.Name}{detail}");
+        }
+        else
+        {
+            // Disconnect events carry only the id; recover the display name from the
+            // connect cache or the last device poll.
+            if (!_controllerNames.TryGetValue(evt.Id, out var name) && evt.Id.Length > 0)
+                name = _discoveredDevices.FirstOrDefault(d => string.Equals(d.Id, evt.Id, StringComparison.OrdinalIgnoreCase))?.Name;
+            if (string.IsNullOrWhiteSpace(name)) name = evt.Name;
+            _controllerNames.Remove(evt.Id);
+            SetFooter($"{name} disconnected.", isError: true);
+            if (AppSettings.Current.ControllerNotificationsEnabled)
+                _trayIcon?.ShowNotification("Controller disconnected", name);
+        }
     }
 
     private void OnSseKeyPressed(KeyPressedEvent evt)
@@ -612,19 +744,23 @@ public partial class MainWindow : Window
             ["sticks"] = StageSticks,
             ["triggers"] = StageTriggers,
             ["gyro"] = StageGyro,
+            ["shunt"] = StageShunt,
             ["combo"] = StageCombo,
             ["radial"] = StageRadial,
             ["crosshair"] = StageCrosshair
         };
         if (!mapping.TryGetValue(stage, out var active)) return;
         foreach (var panel in mapping.Values) panel.Visibility = ReferenceEquals(panel, active) ? Visibility.Visible : Visibility.Collapsed;
+        if (stage == "shunt") StageShunt.RefreshDevices();
     }
 
     private void ThemeSwitchButton_Click(object sender, RoutedEventArgs e)
     {
         _isAimXpTheme = !_isAimXpTheme;
-        App.ApplyTheme(_isAimXpTheme ? App.AimXPTheme : App.BaseTemplateTheme);
-        ThemeSwitchButton.Content = _isAimXpTheme ? "Theme: AimXP" : "Theme: Dark";
+        var theme = _isAimXpTheme ? App.AimXPTheme : App.BaseTemplateTheme;
+        App.ApplyTheme(theme);
+        Services.AppSettings.Current.Theme = theme;
+        Services.AppSettings.Current.Save();
         SetFooter(_isAimXpTheme ? "Switched to the AimXP theme." : "Switched to the BaseTemplate dark theme.");
     }
 
@@ -693,6 +829,7 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        InitializeTrayIcon();
         PopulateProfiles();
         if (_profiles.Count > 0)
         {
@@ -721,8 +858,120 @@ public partial class MainWindow : Window
         await RefreshConnectionAsync();
 
         _deviceRefreshTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
-        _deviceRefreshTimer.Tick += async (_, _) => await RefreshDevicesAsync();
+        _deviceRefreshTimer.Tick += async (_, _) =>
+        {
+            UpdateShuntIndicator(App.LocalEngine.IsShuntModeEnabled, App.LocalEngine.IsGyroEnabled);
+            await RefreshDevicesAsync();
+        };
         _deviceRefreshTimer.Start();
+    }
+
+    // ----------------------- Notification area (system tray) -----------------------
+
+    private void InitializeTrayIcon()
+    {
+        if (_trayIcon != null) return;
+        try
+        {
+            using var stream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/icon.ico"))?.Stream;
+            if (stream == null) return;
+            var icon = new System.Drawing.Icon(stream);
+            _trayIcon = new TrayIconService(icon);
+        }
+        catch
+        {
+            // Notification area unavailable; the window remains the only interface.
+            return;
+        }
+        _trayIcon.OpenRequested += ShowMainWindowFromTray;
+        _trayIcon.SettingsRequested += OpenPreferencesFromTray;
+        _trayIcon.ExitRequested += ExitApplication;
+    }
+
+    private void ShowMainWindowFromTray()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void OpenPreferencesFromTray()
+    {
+        ShowMainWindowFromTray();
+        var dlg = new Views.Dialogs.PreferencesWindow { Owner = this };
+        dlg.ShowDialog();
+    }
+
+    private void ShowTrayHintOnce()
+    {
+        if (_trayHintShown) return;
+        _trayHintShown = true;
+        _trayIcon?.ShowNotification("Shunt is still running",
+            "Shunt keeps remapping active from the notification area. Right-click the icon to exit.");
+    }
+
+    private async void ExitApplication()
+    {
+        if (_isDirty)
+        {
+            if (IsVisible)
+            {
+                if (!await ConfirmDiscardOrSaveAsync()) return;
+            }
+            else
+            {
+                await SaveCurrentProfileAsync();
+            }
+        }
+
+        _allowClose = true;
+        _trayIcon?.Dispose();
+        _trayIcon = null;
+
+        // Stop the engine and shutdown any CLI instances
+        await ShutdownEngineProcessAsync();
+
+        Application.Current.Shutdown();
+    }
+
+    private async Task ShutdownEngineProcessAsync()
+    {
+        try
+        {
+            // Gracefully ask the engine HTTP server to shut down
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(400));
+            await _httpClient.PostAsJsonAsync("api/engine/shutdown", new { }, cts.Token);
+        }
+        catch
+        {
+            // Ignore failure if engine is not reachable
+        }
+
+        // Kill spawned engine process if still active
+        if (_spawnedEngineProcess is { HasExited: false } engine)
+        {
+            try { engine.Kill(entireProcessTree: true); } catch { /* best effort */ }
+        }
+
+        // Terminate any running Shunt.CLI process to ensure complete teardown
+        try
+        {
+            foreach (var proc in System.Diagnostics.Process.GetProcessesByName("Shunt.CLI"))
+            {
+                try
+                {
+                    proc.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // Ignore access denied or already exited
+                }
+            }
+        }
+        catch
+        {
+            // Best effort
+        }
     }
 
     private void PopulateProfiles()
@@ -1553,7 +1802,8 @@ public partial class MainWindow : Window
                 UseShellExecute = false,
                 WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
             };
-            System.Diagnostics.Process.Start(psi);
+            var process = System.Diagnostics.Process.Start(psi);
+            if (process != null) _spawnedEngineProcess = process;
             return true;
         }
         catch
@@ -1646,6 +1896,23 @@ public partial class MainWindow : Window
             EngineStatusText.Text += " · profile status unavailable";
         }
         SetFooter(isLocalEngine ? "Connected to Shunt engine." : "Connected to local engine.");
+        _ = CheckShuntStateAsync();
+    }
+
+    private async Task CheckShuntStateAsync()
+    {
+        try
+        {
+            using var res = await _httpClient.GetAsync("api/shunt/state");
+            if (res.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
+                bool enabled = doc.RootElement.TryGetProperty("enabled", out var ep) && ep.GetBoolean();
+                bool gyro = doc.RootElement.TryGetProperty("gyroEnabled", out var gp) && gp.GetBoolean();
+                UpdateShuntIndicator(enabled, gyro);
+            }
+        }
+        catch { }
     }
 
     private async void ApplyProfileButton_Click(object sender, RoutedEventArgs e)
@@ -1910,6 +2177,10 @@ public partial class MainWindow : Window
             }
         }
 
+        // Keep the connect/disconnect toast able to resolve device names from ids.
+        foreach (var d in devices)
+            _controllerNames[d.Id] = d.Name;
+
         // Compare if devices changed to avoid unnecessary combo resets
         bool listChanged = devices.Count != _discoveredDevices.Count ||
             !devices.Select(d => d.Id).SequenceEqual(_discoveredDevices.Select(d => d.Id));
@@ -2119,13 +2390,28 @@ public partial class MainWindow : Window
         _deviceRefreshTimer?.Stop();
         _detectionCts?.Cancel();
         _eventClient?.Dispose();
+        _trayIcon?.Dispose();
+        _trayIcon = null;
+        try { ShutdownEngineProcessAsync().GetAwaiter().GetResult(); } catch { }
         _httpClient.Dispose();
         base.OnClosed(e);
     }
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
     {
-        if (_allowClose || !_isDirty) return;
+        if (_allowClose) return;
+
+        // Closing keeps the app alive in the notification area; Exit lives in the
+        // tray context menu and fully shuts the app down.
+        if (AppSettings.Current.MinimizeToTray)
+        {
+            e.Cancel = true;
+            Hide();
+            ShowTrayHintOnce();
+            return;
+        }
+
+        if (!_isDirty) return;
         e.Cancel = true;
         if (!await ConfirmDiscardOrSaveAsync()) return;
         _allowClose = true;

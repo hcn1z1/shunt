@@ -93,6 +93,9 @@ public static class PnpDeviceEnumerator
     private const uint SPDRP_HARDWAREID = 0x00000001;
     private const uint SPDRP_MFG = 0x0000000B;
 
+    [DllImport("cfgmgr32.dll", EntryPoint = "CM_Locate_DevNodeW", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern int CM_Locate_DevNode(out uint pdnDevInst, string pDeviceID, int ulFlags);
+
     private static readonly Regex VidPidRegex = new(@"VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4})", RegexOptions.Compiled);
 
     /// <summary>
@@ -236,6 +239,7 @@ public static class PnpDeviceEnumerator
                     using var instKey = devKey.OpenSubKey(instanceName);
                     if (instKey == null) continue;
 
+                    string fullInstanceId = $"USB\\{vidPidSubKeyName}\\{instanceName}";
                     var service = instKey.GetValue("Service") as string;
                     var configFlags = instKey.GetValue("ConfigFlags") as int? ?? -1;
 

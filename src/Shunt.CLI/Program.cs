@@ -132,7 +132,7 @@ internal class Program
         Console.CancelKeyPress += handler;
         try
         {
-            await shutdown.Task;
+            await Task.WhenAny(shutdown.Task, server.WaitForShutdownAsync());
         }
         finally
         {
@@ -169,6 +169,9 @@ internal class Program
                     break;
                 case "stop":
                     response = await client.PostAsJsonAsync("api/engine/stop", new { });
+                    break;
+                case "shutdown":
+                    response = await client.PostAsJsonAsync("api/engine/shutdown", new { });
                     break;
                 case "select_slot" when args.Length >= 3 && int.TryParse(args[2], out var slot):
                     response = await client.PostAsJsonAsync("v2.6/ControllerService/SelectSlot", new { ControllerId = args[1], Slot = slot });

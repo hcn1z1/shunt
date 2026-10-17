@@ -47,9 +47,6 @@
 
                 <!-- Right: Toggles -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="🎯 Gyro ShadPS4" Click="GyroShadPs4_Click" Padding="10,5" Margin="0,0,10,0"
-                            Background="#12333B" Foreground="#6DE3F5" BorderBrush="#28798A" BorderThickness="1"
-                            Cursor="Hand" ToolTip="Detect and verify a controller's motion sensor for ShadPS4."/>
                     <!-- Live Input Glow option toggle -->
                     <ToggleButton x:Name="InputGlowToggle" IsChecked="True" Click="InputGlowToggle_Click"
                                   Cursor="Hand" ToolTip="Live Controller Visualizer: Physical button presses glow on the controller figure in real time"
@@ -664,37 +661,37 @@
         <!-- Shunt Mode live HUD (phase 3) -->
         <Border x:Name="ShuntHud" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 Margin="0,0,20,20" Padding="14,12" CornerRadius="10"
-                Background="#E61A222D" BorderBrush="#6681CF66" BorderThickness="1"
+                Background="{StaticResource SurfaceLevel1Brush}" BorderBrush="{StaticResource BorderNormalBrush}" BorderThickness="1"
                 Visibility="Collapsed">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="2" Opacity="0.4"/>
             </Border.Effect>
             <StackPanel MinWidth="230">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                    <Ellipse x:Name="ShuntActiveDot" Width="8" Height="8" Fill="#81CF66"
+                    <Ellipse x:Name="ShuntActiveDot" Width="8" Height="8" Fill="{StaticResource StatusSuccessBrush}"
                              VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBlock Text="SHUNT MODE: ACTIVE" FontWeight="Bold" FontSize="12" Foreground="#81CF66"/>
+                    <TextBlock Text="SHUNT MODE: ACTIVE" FontWeight="Bold" FontSize="12" Foreground="{StaticResource AccentCreamBrush}"/>
                 </StackPanel>
                 <TextBlock x:Name="ShuntGyroStatus" Text="GYRO: PAUSED" FontSize="11"
-                           Foreground="#C7CDD5" Margin="0,0,0,8"/>
+                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                 <Grid Width="90" Height="54" HorizontalAlignment="Left" Margin="0,0,0,8">
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                     <Grid.RowDefinitions><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                    <Border x:Name="ShuntTouchLeftTop" Grid.Row="0" Grid.Column="0" Margin="1" CornerRadius="3" Background="#332B3542" BorderBrush="#66515C6A" BorderThickness="1"/>
-                    <Border x:Name="ShuntTouchRightTop" Grid.Row="0" Grid.Column="1" Margin="1" CornerRadius="3" Background="#332B3542" BorderBrush="#66515C6A" BorderThickness="1"/>
-                    <Border x:Name="ShuntTouchLeftBottom" Grid.Row="1" Grid.Column="0" Margin="1" CornerRadius="3" Background="#332B3542" BorderBrush="#66515C6A" BorderThickness="1"/>
-                    <Border x:Name="ShuntTouchRightBottom" Grid.Row="1" Grid.Column="1" Margin="1" CornerRadius="3" Background="#332B3542" BorderBrush="#66515C6A" BorderThickness="1"/>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="X" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#9AA4B2" FontSize="10"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Y" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#9AA4B2" FontSize="10"/>
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="A" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#9AA4B2" FontSize="10"/>
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="B" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#9AA4B2" FontSize="10"/>
+                    <Border x:Name="ShuntTouchLeftTop" Grid.Row="0" Grid.Column="0" Margin="1" CornerRadius="3" Background="{StaticResource SurfaceLevel3Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"/>
+                    <Border x:Name="ShuntTouchRightTop" Grid.Row="0" Grid.Column="1" Margin="1" CornerRadius="3" Background="{StaticResource SurfaceLevel3Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"/>
+                    <Border x:Name="ShuntTouchLeftBottom" Grid.Row="1" Grid.Column="0" Margin="1" CornerRadius="3" Background="{StaticResource SurfaceLevel3Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"/>
+                    <Border x:Name="ShuntTouchRightBottom" Grid.Row="1" Grid.Column="1" Margin="1" CornerRadius="3" Background="{StaticResource SurfaceLevel3Brush}" BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1"/>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="X" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" FontSize="10"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Y" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" FontSize="10"/>
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="A" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" FontSize="10"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="B" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" FontSize="10"/>
                 </Grid>
                 <TextBlock x:Name="ShuntTouchAction" Text="Back + face: touchpad click" FontSize="10"
-                           Foreground="#AAB3BF"/>
-                <Expander Header="Shunt shortcuts" FontSize="10" Foreground="#AAB3BF"
+                           Foreground="{StaticResource TextMutedBrush}"/>
+                <Expander Header="Shunt shortcuts" FontSize="10" Foreground="{StaticResource TextMutedBrush}"
                           Background="Transparent" BorderThickness="0" Margin="-6,2,-6,-4">
                     <TextBlock Text="Back + X / B / Y / A: touchpad quadrants&#x0a;Back + right stick: directional swipes&#x0a;L3 + R3: toggle gyro"
-                               FontSize="10" Foreground="#7F8A98" TextWrapping="Wrap" Margin="6,4,6,4"/>
+                               FontSize="10" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="6,4,6,4"/>
                 </Expander>
             </StackPanel>
         </Border>

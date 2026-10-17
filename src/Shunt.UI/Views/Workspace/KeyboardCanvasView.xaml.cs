@@ -66,9 +66,9 @@ public partial class KeyboardCanvasView : UserControl
             Width = 1000,
             Height = 360,
             CornerRadius = new CornerRadius(18),
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#99171B23")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#22FFFFFF")),
-            BorderThickness = new Thickness(1),
+            Background = Brushes.Transparent,
+            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#99FFFFFF")),
+            BorderThickness = new Thickness(1.5),
             IsHitTestVisible = false
         };
         Canvas.SetLeft(keyboardPlate, 100);
@@ -178,18 +178,11 @@ public partial class KeyboardCanvasView : UserControl
             Width = width,
             Height = height,
             CornerRadius = new CornerRadius(5),
-            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E222B")),
-            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33FFFFFF")),
-            BorderThickness = new Thickness(1),
+            Background = Brushes.Transparent,
+            BorderBrush = Brushes.White,
+            BorderThickness = new Thickness(1.2),
             Cursor = Cursors.Hand,
-            ToolTip = $"{label} · {anchor}",
-            Effect = new System.Windows.Media.Effects.DropShadowEffect
-            {
-                Color = Colors.Black,
-                BlurRadius = 5,
-                ShadowDepth = 2,
-                Opacity = 0.45
-            }
+            ToolTip = $"{label} · {anchor}"
         };
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
         stack.Children.Add(new TextBlock
@@ -197,7 +190,7 @@ public partial class KeyboardCanvasView : UserControl
             Text = label,
             FontSize = label.Length > 2 ? 10 : 12,
             FontWeight = FontWeights.SemiBold,
-            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E6FFFFFF")),
+            Foreground = Brushes.White,
             HorizontalAlignment = HorizontalAlignment.Center
         });
         border.Child = stack;
@@ -205,8 +198,8 @@ public partial class KeyboardCanvasView : UserControl
         border.MouseEnter += (_, _) =>
         {
             if (_selectedAnchor == anchor || _glowing.Contains(anchor)) return;
-            border.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#88FFFFFF"));
-            border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#292F3A"));
+            border.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFE795"));
+            border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#22FFFFFF"));
         };
         border.MouseLeave += (_, _) =>
         {

@@ -9,7 +9,7 @@ namespace Shunt.Engine.Hardware;
 
 /// <summary>Minimal SetupAPI/HID declarations used by the phase 3 motion reader.</summary>
 [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-internal static partial class HidNative
+public static partial class HidNative
 {
     private const uint DigcfPresent = 0x2;
     private const uint DigcfDeviceInterface = 0x10;
@@ -52,7 +52,34 @@ internal static partial class HidNative
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern SafeFileHandle CreateFileW(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
 
+    private static readonly Guid UsbDeviceInterfaceGuid = new("a5dcbf10-6530-11d2-901f-00c04fb951ed");
     private static readonly Regex VidPidPattern = new(@"VID_([0-9A-F]{4}).*PID_([0-9A-F]{4})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    /// <summary>Checks whether a HID device path represents a valid motion IMU collection rather than keyboard/mouse/consumer controls.</summary>
+    public static bool IsSupportedImuCollectionPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return false;
+
+        // Filter out keyboard, consumer control, and mouse sub-endpoints on composite devices
+        if (path.Contains("&col01", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains("&col02", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains("&col03", StringComparison.OrdinalIgnoreCase) ||
+            path.Contains("&ig_", StringComparison.OrdinalIgnoreCase) ||
+            path.EndsWith("\\kbd", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // For GameSir composite controllers, specifically select the vendor IMU collection (&col04)
+        if (path.Contains("VID_3537", StringComparison.OrdinalIgnoreCase) &&
+            path.Contains("&col", StringComparison.OrdinalIgnoreCase) &&
+            !path.Contains("&col04", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     public static IReadOnlyList<(string Path, int VendorId, int ProductId)> EnumerateKnownImuCollections()
     {
@@ -83,7 +110,49 @@ internal static partial class HidNative
                     if (!match.Success) continue;
                     var vid = Convert.ToInt32(match.Groups[1].Value, 16);
                     var pid = Convert.ToInt32(match.Groups[2].Value, 16);
-                    if (ImuDeviceProfile.Find(vid, pid) is not null) devices.Add((path, vid, pid));
+                    if (ImuDeviceProfile.Find(vid, pid) is null) continue;
+                    if (!IsSupportedImuCollectionPath(path)) continue;
+
+                    devices.Add((path, vid, pid));
+                }
+                finally { Marshal.FreeHGlobal(detail); }
+            }
+        }
+        finally { _ = SetupDiDestroyDeviceInfoList(set); }
+        return devices;
+    }
+
+    /// <summary>Enumerates connected USB devices to identify controllers that might be in an unsupported mode (e.g. Xbox mode without HID).</summary>
+    public static IReadOnlyList<(string Path, int VendorId, int ProductId)> EnumerateConnectedUsbDevices()
+    {
+        if (!OperatingSystem.IsWindows()) return Array.Empty<(string, int, int)>();
+        var devices = new List<(string, int, int)>();
+        var interfaceGuid = UsbDeviceInterfaceGuid;
+        var set = SetupDiGetClassDevsW(ref interfaceGuid, IntPtr.Zero, IntPtr.Zero, DigcfPresent | DigcfDeviceInterface);
+        if (set == IntPtr.Zero || set == new IntPtr(-1)) return devices;
+
+        try
+        {
+            for (uint index = 0; ; index++)
+            {
+                var interfaceData = new DeviceInterfaceData { Size = Marshal.SizeOf<DeviceInterfaceData>() };
+                if (!SetupDiEnumDeviceInterfaces(set, IntPtr.Zero, ref interfaceGuid, index, ref interfaceData)) break;
+
+                var infoData = new DeviceInfoData { Size = Marshal.SizeOf<DeviceInfoData>() };
+                _ = SetupDiGetDeviceInterfaceDetailW(set, ref interfaceData, IntPtr.Zero, 0, out var required, ref infoData);
+                if (required == 0) continue;
+                var detail = Marshal.AllocHGlobal((int)required);
+                try
+                {
+                    Marshal.WriteInt32(detail, IntPtr.Size == 8 ? 8 : 6);
+                    if (!SetupDiGetDeviceInterfaceDetailW(set, ref interfaceData, detail, required, out _, ref infoData)) continue;
+                    var path = Marshal.PtrToStringUni(IntPtr.Add(detail, 4));
+                    if (string.IsNullOrWhiteSpace(path)) continue;
+                    var match = VidPidPattern.Match(path);
+                    if (!match.Success) continue;
+                    var vid = Convert.ToInt32(match.Groups[1].Value, 16);
+                    var pid = Convert.ToInt32(match.Groups[2].Value, 16);
+                    devices.Add((path, vid, pid));
                 }
                 finally { Marshal.FreeHGlobal(detail); }
             }

@@ -3,6 +3,7 @@
 # ==========================================
 commits/*
 plan/*
+scratch/*
 
 # ==========================================
 # Executables, Libraries & Native Binaries

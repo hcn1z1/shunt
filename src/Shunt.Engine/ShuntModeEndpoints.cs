@@ -13,14 +13,24 @@ public static class ShuntModeEndpoints
         engine.ShuntGyroStateChanged += enabled => events.Publish(new { Type = "ShuntGyroStateChanged", Enabled = enabled });
         engine.ShuntTouchpadActionChanged += action => events.Publish(new { Type = "ShuntTouchpadAction", Action = action });
         engine.ShuntModeError += message => events.Publish(new { Type = "ShuntModeError", Message = message });
+        engine.ChipSyncStatusChanged += result => events.Publish(new { Type = "ChipSyncStatusChanged", Success = result.Success, Message = result.Message, ChunksWritten = result.ChunksWritten });
         app.MapGet("/api/shunt/state", () => Results.Ok(new
         {
             Enabled = engine.IsShuntModeEnabled,
             GyroEnabled = engine.IsShuntGyroEnabled,
+            AutoSyncChip = engine.AutoSyncChipOnGyroToggle,
             Target = engine.ActiveVirtualGamepad?.Type.ToString(),
             DsuEnabled = engine.IsDsuServerEnabled,
             TouchpadAction = engine.LastTouchpadAction,
-            TouchpadActionAt = engine.LastTouchpadActionAt
+            TouchpadActionAt = engine.LastTouchpadActionAt,
+            Pitch = engine.CurrentPitch,
+            Roll = engine.CurrentRoll,
+            Yaw = engine.CurrentYaw,
+            AngularVelocity = engine.CurrentAngularVelocity,
+            GravityG = engine.CurrentGravityG,
+            ActiveSlot = engine.ActiveXInputSlot,
+            HasHardwareImu = engine.HasHardwareImuActive,
+            ModeHint = OperatingSystem.IsWindows() ? HardwareImuDiscovery.DetectControllerModeHint() : null
         }));
         app.MapPost("/api/shunt/enable", (ShuntModeRequest request) => OperatingSystem.IsWindows()
             ? StartAsync(engine, events, request)
@@ -28,6 +38,12 @@ public static class ShuntModeEndpoints
         app.MapPost("/api/shunt/disable", () => OperatingSystem.IsWindows()
             ? StopAsync(engine, events)
             : Task.FromResult<IResult>(Results.Problem("Shunt Mode HID input is available on Windows only.", statusCode: 501)));
+        app.MapPost("/api/shunt/chip/flash", async (ChipFlashRequest request) =>
+        {
+            var targetStick = request.TargetStick == 3 ? GameSirGyroTargetStick.RightStick : GameSirGyroTargetStick.LeftStick;
+            var result = await engine.FlashGameSirChipAsync(targetStick, alwaysActive: request.AlwaysActive);
+            return Results.Ok(result);
+        });
         app.MapPost("/api/shunt/dsu/enable", () =>
         {
             var started = engine.StartDsuServer();
@@ -46,14 +62,18 @@ public static class ShuntModeEndpoints
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static async Task<IResult> StartAsync(ShuntEngineService engine, EngineEventBroker events, ShuntModeRequest request)
     {
-        var device = HardwareImuDiscovery.Enumerate().FirstOrDefault(candidate =>
-            string.Equals(candidate.DevicePath, request.DevicePath, StringComparison.OrdinalIgnoreCase));
-        if (device is null) return Results.NotFound(new { Error = "The selected motion sensor is no longer connected." });
+        HardwareImuDevice? device = null;
+        if (!string.IsNullOrWhiteSpace(request.DevicePath) && !string.Equals(request.DevicePath, "virtual", StringComparison.OrdinalIgnoreCase))
+        {
+            device = HardwareImuDiscovery.Enumerate().FirstOrDefault(candidate =>
+                string.Equals(candidate.DevicePath, request.DevicePath, StringComparison.OrdinalIgnoreCase));
+        }
+
         var mode = request.ActivationMode == "hold" ? GyroActivatorMode.Hold : GyroActivatorMode.Toggle;
         var enabled = await engine.StartShuntModeAsync(device, mode);
         if (!enabled) return Results.BadRequest(new { Error = "Load a DualShock 4 virtual target before enabling Shunt Mode." });
-        events.Publish(new { Type = "ShuntModeChanged", Enabled = true, GyroEnabled = false });
-        return Results.Ok(new { Enabled = true, Device = device.Profile.Name });
+        events.Publish(new { Type = "ShuntModeChanged", Enabled = true, GyroEnabled = engine.IsShuntGyroEnabled, DsuEnabled = engine.IsDsuServerEnabled });
+        return Results.Ok(new { Enabled = true, GyroEnabled = engine.IsShuntGyroEnabled, DsuEnabled = engine.IsDsuServerEnabled, Device = device?.Profile.Name ?? "Any Xbox Controller (Left Stick Tilt)" });
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -65,4 +85,5 @@ public static class ShuntModeEndpoints
     }
 }
 
-public sealed record ShuntModeRequest(string DevicePath, string ActivationMode = "toggle");
+public sealed record ShuntModeRequest(string? DevicePath = null, string ActivationMode = "toggle");
+public sealed record ChipFlashRequest(bool AlwaysActive = true, int TargetStick = 1);

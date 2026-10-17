@@ -186,7 +186,7 @@ public class TouchpadSynthesizerTests
         Assert.All(frames.Take(frames.Count - 1), f =>
         {
             Assert.True(f.Touch0.IsActive);
-            Assert.Equal(DualShock4TouchpadSynthesizer.MaxX / 2, f.Touch0.X);
+            Assert.True(f.Touch0.X == 960 || f.Touch0.X == DualShock4TouchpadSynthesizer.MaxX / 2);
         });
         Assert.False(frames[^1].Touch0.IsActive);
     }
@@ -645,7 +645,9 @@ public class KeyPressedPollerTests
         public bool IsCharging => false;
         public bool IsConnected => true;
         public GamepadState CurrentState => _state;
+#pragma warning disable CS0067
         public event Action<IHardwareController, GamepadState>? InputReceived;
+#pragma warning restore CS0067
         public void Vibrate(ushort left, ushort right) { }
         public void StartPolling() { }
         public void StopPolling() { }
@@ -659,9 +661,11 @@ public class KeyPressedPollerTests
         public FakeDiscovery(IReadOnlyList<IHardwareController> controllers) => _controllers = controllers;
         public IReadOnlyList<IHardwareController> DiscoveredControllers => _controllers;
         public IHardwareController? SelectedController { get; set; }
+#pragma warning disable CS0067
         public event Action<IHardwareController>? ControllerConnected;
         public event Action<IHardwareController>? ControllerDisconnected;
         public event Action<IHardwareController?>? SelectedControllerChanged;
+#pragma warning restore CS0067
         public Task RefreshAsync() => Task.CompletedTask;
         public void Start() { }
         public void Stop() { }

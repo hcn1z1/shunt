@@ -43,7 +43,9 @@ public sealed record ImuReportFormat(
     public bool TryParse(ReadOnlySpan<byte> report, long timestampMilliseconds, out ImuSensorSample sample)
     {
         sample = default;
-        if (report.Length < MinimumLength || report[0] != ReportId) return false;
+        if (report.Length < MinimumLength) return false;
+        if (report[0] != ReportId && report[0] != 0x10 && report[0] != 0x12)
+            return false;
 
         static short ReadInt16(ReadOnlySpan<byte> data, int offset) =>
             System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(data.Slice(offset, sizeof(short)));
@@ -66,7 +68,9 @@ public sealed record ImuDeviceProfile(ushort VendorId, ushort ProductId, string 
 {
     public static IReadOnlyList<ImuDeviceProfile> KnownProfiles { get; } = new[]
     {
-        new ImuDeviceProfile(0x3537, 0x1004, "GameSir G7 Pro / 8K", ImuReportFormat.GameSirG7Pro)
+        new ImuDeviceProfile(0x3537, 0x1004, "GameSir G7 Pro / 8K", ImuReportFormat.GameSirG7Pro),
+        new ImuDeviceProfile(0x3537, 0x100A, "GameSir G7 Pro", ImuReportFormat.GameSirG7Pro),
+        new ImuDeviceProfile(0x3537, 0x1010, "GameSir G7 Pro", ImuReportFormat.GameSirG7Pro)
     };
 
     public static ImuDeviceProfile? Find(int vendorId, int productId)

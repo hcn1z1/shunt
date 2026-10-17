@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Media;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,17 +13,14 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using Shunt.Core.Scancodes;
+using Shunt.Engine.Hardware;
 using Shunt.UI.Views.Dialogs;
 
 namespace Shunt.UI.Views.Workspace;
 
 public partial class GamepadCanvasView : UserControl
 {
-    private void GyroShadPs4_Click(object sender, RoutedEventArgs e)
-    {
-        var dialog = new GyroShadPs4WizardWindow { Owner = Window.GetWindow(this) };
-        dialog.ShowDialog();
-    }
+    // Note: Shunt mode stage has moved to the main navigation menu on the left rail.
 
     private enum PinSide { Left, Right, Top, Bottom }
 
@@ -213,13 +211,11 @@ public partial class GamepadCanvasView : UserControl
 
     private async System.Threading.Tasks.Task RefreshShuntHudAsync()
     {
+        await System.Threading.Tasks.Task.Yield();
         try
         {
-            using var response = await ShuntHudClient.GetAsync("api/shunt/state");
-            if (!response.IsSuccessStatusCode) { ShuntHud.Visibility = Visibility.Collapsed; return; }
-            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            var state = json.RootElement;
-            var enabled = state.TryGetProperty("enabled", out var enabledValue) && enabledValue.GetBoolean();
+            var engine = App.LocalEngine;
+            var enabled = engine.IsShuntModeEnabled;
             if (enabled && ShuntHud.Visibility != Visibility.Visible)
             {
                 ShuntActiveDot.BeginAnimation(UIElement.OpacityProperty,
@@ -241,7 +237,7 @@ public partial class GamepadCanvasView : UserControl
                 return;
             }
 
-            var gyroEnabled = state.TryGetProperty("gyroEnabled", out var gyroValue) && gyroValue.GetBoolean();
+            var gyroEnabled = engine.IsGyroEnabled;
             if (_lastShuntHudGyroState.HasValue && _lastShuntHudGyroState.Value != gyroEnabled)
             {
                 if (gyroEnabled) SystemSounds.Asterisk.Play();
@@ -249,14 +245,10 @@ public partial class GamepadCanvasView : UserControl
             }
             _lastShuntHudGyroState = gyroEnabled;
             ShuntGyroStatus.Text = gyroEnabled ? "GYRO: STREAMING" : "GYRO: PAUSED";
-            ShuntGyroStatus.Foreground = gyroEnabled ? ColorBrush("#81CF66") : ColorBrush("#C7CDD5");
+            ShuntGyroStatus.Foreground = gyroEnabled ? ColorBrush("#81CF66") : ColorBrush("#A0A0A0");
 
-            var action = state.TryGetProperty("touchpadAction", out var actionValue) && actionValue.ValueKind == JsonValueKind.String
-                ? actionValue.GetString()
-                : null;
-            var actionAt = state.TryGetProperty("touchpadActionAt", out var actionAtValue) && actionAtValue.ValueKind == JsonValueKind.String
-                ? actionAtValue.GetDateTimeOffset()
-                : (DateTimeOffset?)null;
+            var action = engine.LastTouchpadAction;
+            var actionAt = engine.LastTouchpadActionAt;
             var recent = action != null && actionAt.HasValue && DateTimeOffset.UtcNow - actionAt.Value < TimeSpan.FromMilliseconds(700);
             var displayedAction = recent ? FormatShuntTouchAction(action!) : "Back + face: touchpad click";
             ShuntTouchAction.Text = displayedAction;
@@ -266,16 +258,14 @@ public partial class GamepadCanvasView : UserControl
                     new DoubleAnimation(0.45, 1, TimeSpan.FromMilliseconds(240)) { AutoReverse = true });
             }
             _lastShuntHudTouchAction = recent ? action : null;
-            var activeFill = ColorBrush("#AA81CF66");
-            var idleFill = ColorBrush("#332B3542");
+            var activeFill = ColorBrush("#AAFFE795");
+            var idleFill = ColorBrush("#303030");
             ShuntTouchLeftTop.Background = recent && action!.Contains("Left", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Top", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
             ShuntTouchRightTop.Background = recent && action!.Contains("Right", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Top", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
             ShuntTouchLeftBottom.Background = recent && action!.Contains("Left", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Bottom", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
             ShuntTouchRightBottom.Background = recent && action!.Contains("Right", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Bottom", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
         }
-        catch (HttpRequestException) { ShuntHud.Visibility = Visibility.Collapsed; }
-        catch (TaskCanceledException) { ShuntHud.Visibility = Visibility.Collapsed; }
-        catch (JsonException) { ShuntHud.Visibility = Visibility.Collapsed; }
+        catch { ShuntHud.Visibility = Visibility.Collapsed; }
     }
 
     private static string FormatShuntTouchAction(string action) => action switch
