@@ -120,7 +120,7 @@ public sealed class XboxToDualShock4ShuntService
             {
                 _backHadPartner = true;
                 outputButtons &= ~faceButtons;
-                var newFaces = faceButtons & ~_previousButtons;
+                var newFaces = faceButtons & ~(backWasDown ? _previousButtons : GamepadButtons.None);
                 if ((newFaces & GamepadButtons.A) != 0) { outputButtons |= GamepadButtons.TouchpadTapBottom; TouchpadActionChanged?.Invoke("Bottom click"); }
                 if ((newFaces & GamepadButtons.B) != 0) { outputButtons |= GamepadButtons.TouchpadTapRight; TouchpadActionChanged?.Invoke("Right click"); }
                 if ((newFaces & GamepadButtons.X) != 0) { outputButtons |= GamepadButtons.TouchpadTapLeft; TouchpadActionChanged?.Invoke("Left click"); }

@@ -152,6 +152,7 @@ public partial class GamepadCanvasView : UserControl
     private DispatcherTimer? _inputGlowTimer;
     private DispatcherTimer? _shuntHudTimer;
     private bool? _lastShuntHudGyroState;
+    private string? _lastShuntHudTouchAction;
     private static readonly HttpClient ShuntHudClient = new()
     {
         BaseAddress = new Uri("http://127.0.0.1:35474/"),
@@ -243,7 +244,14 @@ public partial class GamepadCanvasView : UserControl
                 ? actionAtValue.GetDateTimeOffset()
                 : (DateTimeOffset?)null;
             var recent = action != null && actionAt.HasValue && DateTimeOffset.UtcNow - actionAt.Value < TimeSpan.FromMilliseconds(700);
-            ShuntTouchAction.Text = recent ? action! : "Back + face: touchpad click";
+            var displayedAction = recent ? FormatShuntTouchAction(action!) : "Back + face: touchpad click";
+            ShuntTouchAction.Text = displayedAction;
+            if (recent && !string.Equals(_lastShuntHudTouchAction, action, StringComparison.Ordinal))
+            {
+                ShuntTouchAction.BeginAnimation(UIElement.OpacityProperty,
+                    new DoubleAnimation(0.45, 1, TimeSpan.FromMilliseconds(240)) { AutoReverse = true });
+            }
+            _lastShuntHudTouchAction = recent ? action : null;
             var activeFill = ColorBrush("#AA81CF66");
             var idleFill = ColorBrush("#332B3542");
             ShuntTouchLeftTop.Background = recent && action!.Contains("Left", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Top", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
@@ -255,6 +263,15 @@ public partial class GamepadCanvasView : UserControl
         catch (TaskCanceledException) { ShuntHud.Visibility = Visibility.Collapsed; }
         catch (JsonException) { ShuntHud.Visibility = Visibility.Collapsed; }
     }
+
+    private static string FormatShuntTouchAction(string action) => action switch
+    {
+        "Swipe up" => "↑  Swipe up",
+        "Swipe down" => "↓  Swipe down",
+        "Swipe left" => "←  Swipe left",
+        "Swipe right" => "→  Swipe right",
+        _ => $"●  {action}"
+    };
 
     // ------------------------------ Public API ------------------------------
 
