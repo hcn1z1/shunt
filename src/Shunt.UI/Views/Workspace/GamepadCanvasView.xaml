@@ -47,6 +47,9 @@
 
                 <!-- Right: Toggles -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🎯 Gyro ShadPS4" Click="GyroShadPs4_Click" Padding="10,5" Margin="0,0,10,0"
+                            Background="#12333B" Foreground="#6DE3F5" BorderBrush="#28798A" BorderThickness="1"
+                            Cursor="Hand" ToolTip="Detect and verify a controller's motion sensor for ShadPS4."/>
                     <!-- Live Input Glow option toggle -->
                     <ToggleButton x:Name="InputGlowToggle" IsChecked="True" Click="InputGlowToggle_Click"
                                   Cursor="Hand" ToolTip="Live Controller Visualizer: Physical button presses glow on the controller figure in real time"

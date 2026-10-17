@@ -9,11 +9,18 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using Shunt.Core.Scancodes;
+using Shunt.UI.Views.Dialogs;
 
 namespace Shunt.UI.Views.Workspace;
 
 public partial class GamepadCanvasView : UserControl
 {
+    private void GyroShadPs4_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new GyroShadPs4WizardWindow { Owner = Window.GetWindow(this) };
+        dialog.ShowDialog();
+    }
+
     private enum PinSide { Left, Right, Top, Bottom }
 
     private sealed record ButtonAnchor(
