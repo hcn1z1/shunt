@@ -665,7 +665,7 @@
         <Border x:Name="ShuntHud" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
                 Margin="0,0,20,20" Padding="14,12" CornerRadius="10"
                 Background="#E61A222D" BorderBrush="#6681CF66" BorderThickness="1"
-                Visibility="Collapsed" IsHitTestVisible="False">
+                Visibility="Collapsed">
             <Border.Effect>
                 <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="2" Opacity="0.4"/>
             </Border.Effect>
@@ -691,8 +691,11 @@
                 </Grid>
                 <TextBlock x:Name="ShuntTouchAction" Text="Back + face: touchpad click" FontSize="10"
                            Foreground="#AAB3BF"/>
-                <TextBlock Text="Back + right stick: swipe  •  L3 + R3: gyro"
-                           FontSize="10" Foreground="#7F8A98" Margin="0,4,0,0"/>
+                <Expander Header="Shunt shortcuts" FontSize="10" Foreground="#AAB3BF"
+                          Background="Transparent" BorderThickness="0" Margin="-6,2,-6,-4">
+                    <TextBlock Text="Back + X / B / Y / A: touchpad quadrants&#x0a;Back + right stick: directional swipes&#x0a;L3 + R3: toggle gyro"
+                               FontSize="10" Foreground="#7F8A98" TextWrapping="Wrap" Margin="6,4,6,4"/>
+                </Expander>
             </StackPanel>
         </Border>
     </Grid>

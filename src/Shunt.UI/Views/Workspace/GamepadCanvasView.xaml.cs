@@ -220,6 +220,20 @@ public partial class GamepadCanvasView : UserControl
             using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             var state = json.RootElement;
             var enabled = state.TryGetProperty("enabled", out var enabledValue) && enabledValue.GetBoolean();
+            if (enabled && ShuntHud.Visibility != Visibility.Visible)
+            {
+                ShuntActiveDot.BeginAnimation(UIElement.OpacityProperty,
+                    new DoubleAnimation(0.35, 1, TimeSpan.FromMilliseconds(700))
+                    {
+                        AutoReverse = true,
+                        RepeatBehavior = RepeatBehavior.Forever
+                    });
+            }
+            else if (!enabled)
+            {
+                ShuntActiveDot.BeginAnimation(UIElement.OpacityProperty, null);
+                ShuntActiveDot.Opacity = 1;
+            }
             ShuntHud.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
             if (!enabled)
             {
