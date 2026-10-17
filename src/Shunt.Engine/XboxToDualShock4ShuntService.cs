@@ -19,6 +19,7 @@ public sealed class XboxToDualShock4ShuntService
     public GyroActivatorMode ActivationMode { get; set; } = GyroActivatorMode.Toggle;
     public bool IsGyroEnabled { get; private set; }
     public event Action<bool>? GyroStateChanged;
+    public event Action<string>? TouchpadActionChanged;
 
     public GamepadState Process(GamepadState input, long timestampMilliseconds, ImuSensorSample? imuSample = null)
     {
@@ -119,10 +120,11 @@ public sealed class XboxToDualShock4ShuntService
             {
                 _backHadPartner = true;
                 outputButtons &= ~faceButtons;
-                if ((faceButtons & GamepadButtons.A) != 0) outputButtons |= GamepadButtons.TouchpadTapBottom;
-                if ((faceButtons & GamepadButtons.B) != 0) outputButtons |= GamepadButtons.TouchpadTapRight;
-                if ((faceButtons & GamepadButtons.X) != 0) outputButtons |= GamepadButtons.TouchpadTapLeft;
-                if ((faceButtons & GamepadButtons.Y) != 0) outputButtons |= GamepadButtons.TouchpadTapTop;
+                var newFaces = faceButtons & ~_previousButtons;
+                if ((newFaces & GamepadButtons.A) != 0) { outputButtons |= GamepadButtons.TouchpadTapBottom; TouchpadActionChanged?.Invoke("Bottom click"); }
+                if ((newFaces & GamepadButtons.B) != 0) { outputButtons |= GamepadButtons.TouchpadTapRight; TouchpadActionChanged?.Invoke("Right click"); }
+                if ((newFaces & GamepadButtons.X) != 0) { outputButtons |= GamepadButtons.TouchpadTapLeft; TouchpadActionChanged?.Invoke("Left click"); }
+                if ((newFaces & GamepadButtons.Y) != 0) { outputButtons |= GamepadButtons.TouchpadTapTop; TouchpadActionChanged?.Invoke("Top click"); }
             }
 
             var magnitude = MathF.Sqrt(input.RightStick.X * input.RightStick.X + input.RightStick.Y * input.RightStick.Y);
@@ -130,6 +132,7 @@ public sealed class XboxToDualShock4ShuntService
             {
                 _backHadPartner = true;
                 outputButtons &= ~(GamepadButtons.SwipeUp | GamepadButtons.SwipeDown | GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight);
+                var previousSwipe = _activeSwipe;
                 _activeSwipe = input.RightStick.X switch
                 {
                     var x when MathF.Abs(x) >= MathF.Abs(input.RightStick.Y) && x > 0f => GamepadButtons.SwipeRight,
@@ -138,6 +141,14 @@ public sealed class XboxToDualShock4ShuntService
                     _ => GamepadButtons.SwipeDown
                 };
                 outputButtons |= _activeSwipe;
+                if (_activeSwipe != previousSwipe)
+                    TouchpadActionChanged?.Invoke(_activeSwipe switch
+                    {
+                        GamepadButtons.SwipeUp => "Swipe up",
+                        GamepadButtons.SwipeDown => "Swipe down",
+                        GamepadButtons.SwipeLeft => "Swipe left",
+                        _ => "Swipe right"
+                    });
             }
             else if (magnitude < 0.30f)
             {
@@ -153,7 +164,11 @@ public sealed class XboxToDualShock4ShuntService
         else if (backWasDown)
         {
             outputButtons &= ~GamepadButtons.Back;
-            if (!_backHadPartner) outputButtons |= GamepadButtons.TouchpadTap;
+            if (!_backHadPartner)
+            {
+                outputButtons |= GamepadButtons.TouchpadTap;
+                TouchpadActionChanged?.Invoke("Center click");
+            }
             _backHadPartner = false;
             _activeSwipe = GamepadButtons.None;
         }

@@ -36,6 +36,9 @@ public class ShuntEngineService : IDisposable
     public bool IsRunning { get; private set; }
     public bool IsShuntModeEnabled { get; private set; }
     public bool IsShuntGyroEnabled => _shuntRuntime.IsGyroEnabled;
+    public bool IsDsuServerEnabled => _dsuServer?.IsRunning == true;
+    public string? LastTouchpadAction { get; private set; }
+    public DateTimeOffset? LastTouchpadActionAt { get; private set; }
     public int CurrentSlot { get; private set; } = 0;
     public RewasdProfileDocument? ActiveProfile => _slotProfiles[CurrentSlot];
     public IVirtualGamepad? ActiveVirtualGamepad => _activeVirtualGamepad;
@@ -49,6 +52,7 @@ public class ShuntEngineService : IDisposable
     /// </summary>
     public event EventHandler<FeedbackEventArgs>? VirtualGamepadFeedback;
     public event Action<bool>? ShuntGyroStateChanged;
+    public event Action<string>? ShuntTouchpadActionChanged;
     public event Action<string>? ShuntModeError;
 
     /// <summary>Last formatted HID output report for the active virtual target (diagnostics).</summary>
@@ -130,6 +134,7 @@ public class ShuntEngineService : IDisposable
         _hardwareDiscovery.Start();
         _hardwareDiscovery.SelectedController?.StartPolling();
         _shuntRuntime.GyroStateChanged += OnShuntGyroStateChanged;
+        _shuntRuntime.TouchpadActionChanged += OnShuntTouchpadActionChanged;
     }
 
     /// <summary>
@@ -349,6 +354,13 @@ public class ShuntEngineService : IDisposable
 
     private void OnShuntGyroStateChanged(bool enabled) => ShuntGyroStateChanged?.Invoke(enabled);
 
+    private void OnShuntTouchpadActionChanged(string action)
+    {
+        LastTouchpadAction = action;
+        LastTouchpadActionAt = DateTimeOffset.UtcNow;
+        ShuntTouchpadActionChanged?.Invoke(action);
+    }
+
     public bool StartDsuServer(int port = DsuMotionServer.DefaultPort)
     {
         if (_dsuServer?.IsRunning == true) return true;
@@ -380,6 +392,7 @@ public class ShuntEngineService : IDisposable
         else
             DisableShuntMode();
         _shuntRuntime.GyroStateChanged -= OnShuntGyroStateChanged;
+        _shuntRuntime.TouchpadActionChanged -= OnShuntTouchpadActionChanged;
         if (_activeVirtualGamepad != null)
         {
             _activeVirtualGamepad.FeedbackReceived -= OnVirtualGamepadFeedback;

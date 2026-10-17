@@ -10,11 +10,17 @@ public static class ShuntModeEndpoints
 {
     public static void Map(WebApplication app, ShuntEngineService engine, EngineEventBroker events)
     {
+        engine.ShuntGyroStateChanged += enabled => events.Publish(new { Type = "ShuntGyroStateChanged", Enabled = enabled });
+        engine.ShuntTouchpadActionChanged += action => events.Publish(new { Type = "ShuntTouchpadAction", Action = action });
+        engine.ShuntModeError += message => events.Publish(new { Type = "ShuntModeError", Message = message });
         app.MapGet("/api/shunt/state", () => Results.Ok(new
         {
             Enabled = engine.IsShuntModeEnabled,
             GyroEnabled = engine.IsShuntGyroEnabled,
-            Target = engine.ActiveVirtualGamepad?.Type.ToString()
+            Target = engine.ActiveVirtualGamepad?.Type.ToString(),
+            DsuEnabled = engine.IsDsuServerEnabled,
+            TouchpadAction = engine.LastTouchpadAction,
+            TouchpadActionAt = engine.LastTouchpadActionAt
         }));
         app.MapPost("/api/shunt/enable", (ShuntModeRequest request) => OperatingSystem.IsWindows()
             ? StartAsync(engine, events, request)

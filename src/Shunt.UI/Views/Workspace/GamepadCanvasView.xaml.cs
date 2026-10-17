@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -147,6 +149,12 @@ public partial class GamepadCanvasView : UserControl
     private ButtonAnchor[] CurrentAnchors => _chassis == "ds4" ? Ds4Anchors : Anchors;
 
     private DispatcherTimer? _inputGlowTimer;
+    private DispatcherTimer? _shuntHudTimer;
+    private static readonly HttpClient ShuntHudClient = new()
+    {
+        BaseAddress = new Uri("http://127.0.0.1:35474/"),
+        Timeout = TimeSpan.FromSeconds(2)
+    };
     private readonly HashSet<string> _currentlyGlowingButtons = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, (Brush? Fill, Brush? Stroke, double StrokeThickness, System.Windows.Media.Effects.Effect? Effect)> _defaultButtonAppearances = new(StringComparer.OrdinalIgnoreCase);
 
@@ -174,6 +182,66 @@ public partial class GamepadCanvasView : UserControl
         RebuildAnnotations();
         Loaded += (_, _) => StartInputGlowPolling();
         Unloaded += (_, _) => StopInputGlowPolling();
+        Loaded += (_, _) => StartShuntHudPolling();
+        Unloaded += (_, _) => StopShuntHudPolling();
+    }
+
+    private void StartShuntHudPolling()
+    {
+        if (_shuntHudTimer != null) return;
+        _shuntHudTimer = new DispatcherTimer(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(350)
+        };
+        _shuntHudTimer.Tick += ShuntHudTimer_Tick;
+        _shuntHudTimer.Start();
+        _ = RefreshShuntHudAsync();
+    }
+
+    private void StopShuntHudPolling()
+    {
+        if (_shuntHudTimer == null) return;
+        _shuntHudTimer.Stop();
+        _shuntHudTimer.Tick -= ShuntHudTimer_Tick;
+        _shuntHudTimer = null;
+    }
+
+    private async void ShuntHudTimer_Tick(object? sender, EventArgs e) => await RefreshShuntHudAsync();
+
+    private async System.Threading.Tasks.Task RefreshShuntHudAsync()
+    {
+        try
+        {
+            using var response = await ShuntHudClient.GetAsync("api/shunt/state");
+            if (!response.IsSuccessStatusCode) { ShuntHud.Visibility = Visibility.Collapsed; return; }
+            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var state = json.RootElement;
+            var enabled = state.TryGetProperty("enabled", out var enabledValue) && enabledValue.GetBoolean();
+            ShuntHud.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
+            if (!enabled) return;
+
+            var gyroEnabled = state.TryGetProperty("gyroEnabled", out var gyroValue) && gyroValue.GetBoolean();
+            ShuntGyroStatus.Text = gyroEnabled ? "GYRO: STREAMING" : "GYRO: PAUSED";
+            ShuntGyroStatus.Foreground = gyroEnabled ? ColorBrush("#81CF66") : ColorBrush("#C7CDD5");
+
+            var action = state.TryGetProperty("touchpadAction", out var actionValue) && actionValue.ValueKind == JsonValueKind.String
+                ? actionValue.GetString()
+                : null;
+            var actionAt = state.TryGetProperty("touchpadActionAt", out var actionAtValue) && actionAtValue.ValueKind == JsonValueKind.String
+                ? actionAtValue.GetDateTimeOffset()
+                : (DateTimeOffset?)null;
+            var recent = action != null && actionAt.HasValue && DateTimeOffset.UtcNow - actionAt.Value < TimeSpan.FromMilliseconds(700);
+            ShuntTouchAction.Text = recent ? action! : "Back + face: touchpad click";
+            var activeFill = ColorBrush("#AA81CF66");
+            var idleFill = ColorBrush("#332B3542");
+            ShuntTouchLeftTop.Background = recent && action!.Contains("Left", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Top", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
+            ShuntTouchRightTop.Background = recent && action!.Contains("Right", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Top", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
+            ShuntTouchLeftBottom.Background = recent && action!.Contains("Left", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Bottom", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
+            ShuntTouchRightBottom.Background = recent && action!.Contains("Right", StringComparison.OrdinalIgnoreCase) || recent && action!.Contains("Bottom", StringComparison.OrdinalIgnoreCase) ? activeFill : idleFill;
+        }
+        catch (HttpRequestException) { ShuntHud.Visibility = Visibility.Collapsed; }
+        catch (TaskCanceledException) { ShuntHud.Visibility = Visibility.Collapsed; }
+        catch (JsonException) { ShuntHud.Visibility = Visibility.Collapsed; }
     }
 
     // ------------------------------ Public API ------------------------------
