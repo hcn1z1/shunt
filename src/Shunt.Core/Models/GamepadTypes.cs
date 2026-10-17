@@ -44,7 +44,11 @@ public enum GamepadButtons : ulong
     PaddleP1 = 1UL << 30,
     PaddleP2 = 1UL << 31,
     PaddleP3 = 1UL << 32,
-    PaddleP4 = 1UL << 33
+    PaddleP4 = 1UL << 33,
+    TouchpadTapLeft = 1UL << 34,
+    TouchpadTapRight = 1UL << 35,
+    TouchpadTapTop = 1UL << 36,
+    TouchpadTapBottom = 1UL << 37
 }
 
 /// <summary>

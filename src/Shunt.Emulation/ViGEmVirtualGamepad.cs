@@ -108,7 +108,7 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
 {
     private readonly IDualShock4Controller _controller;
     private readonly object _stateLock = new();
-    private readonly Queue<TouchpadGesture> _pendingGestures = new();
+    private readonly Queue<(TouchpadGesture Gesture, bool Click)> _pendingGestures = new();
     private readonly DualShock4TouchpadSynthesizer _touchpadSynthesizer = new();
     private readonly CancellationTokenSource _lifetime = new();
     private GamepadState _latestState = new();
@@ -204,16 +204,24 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
     private void EnqueueRisingGestures(GamepadButtons buttons)
     {
         const GamepadButtons gestures = GamepadButtons.SwipeUp | GamepadButtons.SwipeDown |
-                                        GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight;
+                                        GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight |
+                                        GamepadButtons.TouchpadTap | GamepadButtons.TouchpadTapLeft |
+                                        GamepadButtons.TouchpadTapRight | GamepadButtons.TouchpadTapTop |
+                                        GamepadButtons.TouchpadTapBottom;
         var pressed = buttons & gestures;
         var rising = pressed & ~_previousGestureButtons;
         _previousGestureButtons = pressed;
         if (_extendedTouchpadDisabled) return;
 
-        if ((rising & GamepadButtons.SwipeUp) != 0) _pendingGestures.Enqueue(TouchpadGesture.SwipeUp);
-        if ((rising & GamepadButtons.SwipeDown) != 0) _pendingGestures.Enqueue(TouchpadGesture.SwipeDown);
-        if ((rising & GamepadButtons.SwipeLeft) != 0) _pendingGestures.Enqueue(TouchpadGesture.SwipeLeft);
-        if ((rising & GamepadButtons.SwipeRight) != 0) _pendingGestures.Enqueue(TouchpadGesture.SwipeRight);
+        if ((rising & GamepadButtons.SwipeUp) != 0) _pendingGestures.Enqueue((TouchpadGesture.SwipeUp, false));
+        if ((rising & GamepadButtons.SwipeDown) != 0) _pendingGestures.Enqueue((TouchpadGesture.SwipeDown, false));
+        if ((rising & GamepadButtons.SwipeLeft) != 0) _pendingGestures.Enqueue((TouchpadGesture.SwipeLeft, false));
+        if ((rising & GamepadButtons.SwipeRight) != 0) _pendingGestures.Enqueue((TouchpadGesture.SwipeRight, false));
+        if ((rising & GamepadButtons.TouchpadTap) != 0) _pendingGestures.Enqueue((TouchpadGesture.TapCenter, true));
+        if ((rising & GamepadButtons.TouchpadTapLeft) != 0) _pendingGestures.Enqueue((TouchpadGesture.TapLeft, true));
+        if ((rising & GamepadButtons.TouchpadTapRight) != 0) _pendingGestures.Enqueue((TouchpadGesture.TapRight, true));
+        if ((rising & GamepadButtons.TouchpadTapTop) != 0) _pendingGestures.Enqueue((TouchpadGesture.TapTop, true));
+        if ((rising & GamepadButtons.TouchpadTapBottom) != 0) _pendingGestures.Enqueue((TouchpadGesture.TapBottom, true));
     }
 
     private async Task PlayPendingGesturesAsync(CancellationToken cancellationToken)
@@ -223,6 +231,7 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
             while (!cancellationToken.IsCancellationRequested)
             {
                 TouchpadGesture gesture;
+                bool click;
                 lock (_stateLock)
                 {
                     if (!IsConnected || _pendingGestures.Count == 0)
@@ -233,7 +242,7 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
                         return;
                     }
 
-                    gesture = _pendingGestures.Dequeue();
+                    (gesture, click) = _pendingGestures.Dequeue();
                 }
 
                 var frames = _touchpadSynthesizer.Synthesize(gesture);
@@ -249,7 +258,7 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
                     lock (_stateLock)
                     {
                         if (!IsConnected) return;
-                        SubmitExtendedReport(_latestState, frame.Touch0, frame.Touch1);
+                        SubmitExtendedReport(click ? WithTouchpadClick(_latestState) : _latestState, frame.Touch0, frame.Touch1);
                     }
                     await Task.Delay(frame.DurationMs, cancellationToken).ConfigureAwait(false);
                 }
@@ -316,6 +325,9 @@ public class ViGEmDualShock4Gamepad : ICoreVirtualGamepad
         };
         return button != GamepadButtons.None;
     }
+
+    private static GamepadState WithTouchpadClick(GamepadState state) =>
+        state with { Buttons = state.Buttons | GamepadButtons.TouchpadClick };
 
     private void SubmitStandardReport(GamepadState state)
     {

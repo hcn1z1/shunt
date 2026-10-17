@@ -13,6 +13,8 @@ public sealed class XboxToDualShock4ShuntService
     private long? _rightThumbPressedAt;
     private bool _previousGyroChord;
     private bool _gyroToggledOn;
+    private bool _backHadPartner;
+    private GamepadButtons _activeSwipe;
 
     public GyroActivatorMode ActivationMode { get; set; } = GyroActivatorMode.Toggle;
     public bool IsGyroEnabled { get; private set; }
@@ -58,6 +60,11 @@ public sealed class XboxToDualShock4ShuntService
                 outputButtons &= ~GamepadButtons.RightThumb;
         }
 
+        outputButtons = ResolveTouchpadChords(input, outputButtons);
+        var outputRightStick = input.RightStick;
+        if ((buttons & GamepadButtons.Back) != 0 &&
+            MathF.Sqrt(input.RightStick.X * input.RightStick.X + input.RightStick.Y * input.RightStick.Y) >= 0.30f)
+            outputRightStick = StickPosition.Center;
         _previousGyroChord = chordFormed;
         _previousButtons = buttons;
 
@@ -66,6 +73,7 @@ public sealed class XboxToDualShock4ShuntService
             return input with
             {
                 Buttons = outputButtons,
+                RightStick = outputRightStick,
                 GyroVelX = IsGyroEnabled ? sample.GyroX : 0f,
                 GyroVelY = IsGyroEnabled ? sample.GyroY : 0f,
                 GyroVelZ = IsGyroEnabled ? sample.GyroZ : 0f,
@@ -78,6 +86,7 @@ public sealed class XboxToDualShock4ShuntService
         return input with
         {
             Buttons = outputButtons,
+            RightStick = outputRightStick,
             GyroVelX = IsGyroEnabled ? input.GyroVelX : 0f,
             GyroVelY = IsGyroEnabled ? input.GyroVelY : 0f,
             GyroVelZ = IsGyroEnabled ? input.GyroVelZ : 0f
@@ -91,7 +100,69 @@ public sealed class XboxToDualShock4ShuntService
         _rightThumbPressedAt = null;
         _previousGyroChord = false;
         _gyroToggledOn = false;
+        _backHadPartner = false;
+        _activeSwipe = GamepadButtons.None;
         SetGyroEnabled(false);
+    }
+
+    private GamepadButtons ResolveTouchpadChords(GamepadState input, GamepadButtons outputButtons)
+    {
+        var back = (input.Buttons & GamepadButtons.Back) != 0;
+        var backWasDown = (_previousButtons & GamepadButtons.Back) != 0;
+        var faceButtons = input.Buttons & (GamepadButtons.A | GamepadButtons.B | GamepadButtons.X | GamepadButtons.Y);
+        if (back && !backWasDown) _backHadPartner = false;
+
+        if (back)
+        {
+            outputButtons &= ~GamepadButtons.Back;
+            if (faceButtons != GamepadButtons.None)
+            {
+                _backHadPartner = true;
+                outputButtons &= ~faceButtons;
+                if ((faceButtons & GamepadButtons.A) != 0) outputButtons |= GamepadButtons.TouchpadTapBottom;
+                if ((faceButtons & GamepadButtons.B) != 0) outputButtons |= GamepadButtons.TouchpadTapRight;
+                if ((faceButtons & GamepadButtons.X) != 0) outputButtons |= GamepadButtons.TouchpadTapLeft;
+                if ((faceButtons & GamepadButtons.Y) != 0) outputButtons |= GamepadButtons.TouchpadTapTop;
+            }
+
+            var magnitude = MathF.Sqrt(input.RightStick.X * input.RightStick.X + input.RightStick.Y * input.RightStick.Y);
+            if (magnitude >= 0.70f)
+            {
+                _backHadPartner = true;
+                outputButtons &= ~(GamepadButtons.SwipeUp | GamepadButtons.SwipeDown | GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight);
+                _activeSwipe = input.RightStick.X switch
+                {
+                    var x when MathF.Abs(x) >= MathF.Abs(input.RightStick.Y) && x > 0f => GamepadButtons.SwipeRight,
+                    var x when MathF.Abs(x) >= MathF.Abs(input.RightStick.Y) && x < 0f => GamepadButtons.SwipeLeft,
+                    _ when input.RightStick.Y > 0f => GamepadButtons.SwipeUp,
+                    _ => GamepadButtons.SwipeDown
+                };
+                outputButtons |= _activeSwipe;
+            }
+            else if (magnitude < 0.30f)
+            {
+                outputButtons &= ~(GamepadButtons.SwipeUp | GamepadButtons.SwipeDown | GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight);
+                _activeSwipe = GamepadButtons.None;
+            }
+            else
+            {
+                outputButtons &= ~(GamepadButtons.SwipeUp | GamepadButtons.SwipeDown | GamepadButtons.SwipeLeft | GamepadButtons.SwipeRight);
+                outputButtons |= _activeSwipe;
+            }
+        }
+        else if (backWasDown)
+        {
+            outputButtons &= ~GamepadButtons.Back;
+            if (!_backHadPartner) outputButtons |= GamepadButtons.TouchpadTap;
+            _backHadPartner = false;
+            _activeSwipe = GamepadButtons.None;
+        }
+        else
+        {
+            _activeSwipe = GamepadButtons.None;
+        }
+
+        return outputButtons;
     }
 
     private void SetGyroEnabled(bool enabled)

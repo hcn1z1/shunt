@@ -17,6 +17,8 @@ public enum TouchpadGesture
     TapLeft,
     TapRight,
     TapCenter,
+    TapTop,
+    TapBottom,
     MultiTap,
     SwipeUp,
     SwipeDown,
@@ -55,13 +57,19 @@ public sealed class DualShock4TouchpadSynthesizer
         switch (gesture)
         {
             case TouchpadGesture.TapLeft:
-                frames.AddRange(Tap(320, MaxY / 2, fingerId));
+                frames.AddRange(Tap(480, 471, fingerId));
                 break;
             case TouchpadGesture.TapRight:
-                frames.AddRange(Tap(MaxX - 320, MaxY / 2, fingerId));
+                frames.AddRange(Tap(1440, 471, fingerId));
                 break;
             case TouchpadGesture.TapCenter:
-                frames.AddRange(Tap(MaxX / 2, MaxY / 2, fingerId));
+                frames.AddRange(Tap(960, 471, fingerId));
+                break;
+            case TouchpadGesture.TapTop:
+                frames.AddRange(Tap(960, 235, fingerId));
+                break;
+            case TouchpadGesture.TapBottom:
+                frames.AddRange(Tap(960, 706, fingerId));
                 break;
             case TouchpadGesture.MultiTap:
                 frames.AddRange(Tap(MaxX / 2, MaxY / 2, 0));
