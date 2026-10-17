@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Shunt.Core.Interfaces;
@@ -24,6 +25,7 @@ public class ShuntEngineService : IDisposable
     private readonly object _imuLock = new();
     private ImuSensorSample? _latestImuSample;
     private HardwareImuPoller? _activeImuPoller;
+    private DsuMotionServer? _dsuServer;
     private ushort _reportCounter;
 
     public bool IsRunning { get; private set; }
@@ -171,6 +173,7 @@ public class ShuntEngineService : IDisposable
             mapped = _shuntRuntime.Process(mapped, Environment.TickCount64, sample);
         }
         _activeVirtualGamepad.UpdateState(mapped);
+        _dsuServer?.UpdateState(mapped);
 
         // Format the device-specific HID report from the high-capacity virtual state (plan 07 §4)
         if (_activeVirtualGamepad is StubVirtualGamepad stub)
@@ -305,6 +308,30 @@ public class ShuntEngineService : IDisposable
 
     private void OnShuntGyroStateChanged(bool enabled) => ShuntGyroStateChanged?.Invoke(enabled);
 
+    public bool StartDsuServer(int port = DsuMotionServer.DefaultPort)
+    {
+        if (_dsuServer?.IsRunning == true) return true;
+        try
+        {
+            _dsuServer = new DsuMotionServer(port);
+            _dsuServer.Start();
+            return true;
+        }
+        catch (SocketException)
+        {
+            _dsuServer?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _dsuServer = null;
+            return false;
+        }
+    }
+
+    public async Task StopDsuServerAsync()
+    {
+        var server = _dsuServer;
+        _dsuServer = null;
+        if (server is not null) await server.DisposeAsync().ConfigureAwait(false);
+    }
+
     private void StopVirtualGamepad()
     {
         if (OperatingSystem.IsWindows())
@@ -336,6 +363,7 @@ public class ShuntEngineService : IDisposable
     public void Dispose()
     {
         Stop();
+        StopDsuServerAsync().GetAwaiter().GetResult();
         _hardwareDiscovery.Dispose();
         _gamepadManager.Dispose();
     }

@@ -22,6 +22,19 @@ public static class ShuntModeEndpoints
         app.MapPost("/api/shunt/disable", () => OperatingSystem.IsWindows()
             ? StopAsync(engine, events)
             : Task.FromResult<IResult>(Results.Problem("Shunt Mode HID input is available on Windows only.", statusCode: 501)));
+        app.MapPost("/api/shunt/dsu/enable", () =>
+        {
+            var started = engine.StartDsuServer();
+            if (!started) return Results.Conflict(new { Error = "The DSU port is already in use." });
+            events.Publish(new { Type = "DsuServerChanged", Enabled = true, Port = DsuMotionServer.DefaultPort });
+            return Results.Ok(new { Enabled = true, Port = DsuMotionServer.DefaultPort });
+        });
+        app.MapPost("/api/shunt/dsu/disable", async () =>
+        {
+            await engine.StopDsuServerAsync();
+            events.Publish(new { Type = "DsuServerChanged", Enabled = false });
+            return Results.Ok(new { Enabled = false });
+        });
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
