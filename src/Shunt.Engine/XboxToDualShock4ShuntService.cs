@@ -76,8 +76,9 @@ public sealed class XboxToDualShock4ShuntService
                 Buttons = outputButtons,
                 RightStick = outputRightStick,
                 GyroVelX = IsGyroEnabled ? sample.GyroX : 0f,
-                GyroVelY = IsGyroEnabled ? sample.GyroY : 0f,
-                GyroVelZ = IsGyroEnabled ? sample.GyroZ : 0f,
+                // Vendor report order is pitch, roll, yaw; DS4 expects pitch, yaw, roll.
+                GyroVelY = IsGyroEnabled ? sample.GyroZ : 0f,
+                GyroVelZ = IsGyroEnabled ? sample.GyroY : 0f,
                 AccelX = sample.AccelX,
                 AccelY = sample.AccelY,
                 AccelZ = sample.AccelZ

@@ -28,6 +28,9 @@ public class ShuntEngineService : IDisposable
     private ImuSensorSample? _latestImuSample;
     private HardwareImuPoller? _activeImuPoller;
     private DsuMotionServer? _dsuServer;
+    private CancellationTokenSource? _shuntFrameCts;
+    private Task? _shuntFrameTask;
+    private GamepadState _latestShuntInput = new();
     private string? _shuntBlockedDevice;
     private bool _shuntAddedDeviceBlock;
     private bool _filterWasActive;
@@ -181,9 +184,8 @@ public class ShuntEngineService : IDisposable
         var mapped = _pipeline.Process(rawInput);
         if (IsShuntModeEnabled)
         {
-            ImuSensorSample? sample;
-            lock (_imuLock) sample = _latestImuSample;
-            mapped = _shuntRuntime.Process(mapped, Environment.TickCount64, sample);
+            lock (_imuLock) _latestShuntInput = mapped;
+            return;
         }
         _activeVirtualGamepad.UpdateState(mapped);
         _dsuServer?.UpdateState(mapped);
@@ -250,13 +252,16 @@ public class ShuntEngineService : IDisposable
         if (!IsRunning || _activeVirtualGamepad?.Type != VirtualGamepadType.DualShock4) return false;
         _shuntRuntime.ActivationMode = activationMode;
         _shuntRuntime.Reset();
+        lock (_imuLock) _latestShuntInput = new GamepadState();
         IsShuntModeEnabled = true;
+        StartShuntFrameLoop();
         return true;
     }
 
     public void DisableShuntMode()
     {
         IsShuntModeEnabled = false;
+        _shuntFrameCts?.Cancel();
         _shuntRuntime.Reset();
         lock (_imuLock) _latestImuSample = null;
         RestoreDeviceIsolation();
@@ -328,7 +333,46 @@ public class ShuntEngineService : IDisposable
     public async Task StopShuntModeAsync()
     {
         DisableShuntMode();
+        if (_shuntFrameTask is not null)
+        {
+            try { await _shuntFrameTask.ConfigureAwait(false); }
+            catch (OperationCanceledException) { }
+            _shuntFrameTask = null;
+        }
+        _shuntFrameCts?.Dispose();
+        _shuntFrameCts = null;
         await StopImuPollerAsync().ConfigureAwait(false);
+    }
+
+    private void StartShuntFrameLoop()
+    {
+        _shuntFrameCts?.Cancel();
+        _shuntFrameCts?.Dispose();
+        _shuntFrameCts = new CancellationTokenSource();
+        _shuntFrameTask = Task.Run(() => ShuntFrameLoopAsync(_shuntFrameCts.Token));
+    }
+
+    private async Task ShuntFrameLoopAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested && IsRunning && IsShuntModeEnabled)
+            {
+                GamepadState input;
+                ImuSensorSample? sample;
+                lock (_imuLock)
+                {
+                    input = _latestShuntInput;
+                    sample = _latestImuSample;
+                }
+
+                var output = _shuntRuntime.Process(input, Environment.TickCount64, sample);
+                _activeVirtualGamepad?.UpdateState(output);
+                _dsuServer?.UpdateState(output);
+                await Task.Delay(4, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
