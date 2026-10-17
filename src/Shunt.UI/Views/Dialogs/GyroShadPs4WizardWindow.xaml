@@ -33,8 +33,18 @@
                 </UniformGrid>
             </StackPanel>
         </Border>
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+        <Grid Grid.Row="3" Margin="0,18,0,0">
+            <ComboBox x:Name="ActivationModeCombo" Width="180" Height="34" HorizontalAlignment="Left" SelectedIndex="0"
+                      Background="#222A34" Foreground="#E8EDF2" ToolTip="Choose whether L3 + R3 toggles gyro or holds it on.">
+                <ComboBoxItem Content="Toggle with L3 + R3"/>
+                <ComboBoxItem Content="Hold L3 + R3"/>
+            </ComboBox>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="EnableShuntButton" Content="Enable Shunt Mode" IsEnabled="False" Width="160" Padding="10,6"
+                        Margin="0,0,10,0" Background="#00A9C7" Foreground="White" BorderThickness="0"
+                        Click="EnableShuntButton_Click"/>
             <Button Content="Close" Width="100" Padding="10,6" Click="CloseButton_Click"/>
-        </StackPanel>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

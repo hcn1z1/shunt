@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,6 +12,7 @@ namespace Shunt.UI.Views.Dialogs;
 
 public partial class GyroShadPs4WizardWindow : Window
 {
+    private static readonly HttpClient EngineClient = new() { BaseAddress = new Uri("http://127.0.0.1:35474/"), Timeout = TimeSpan.FromSeconds(5) };
     private readonly GyroShadPs4TestRunner _runner = new();
     private HardwareImuDevice[] _devices = [];
     private CancellationTokenSource? _testCancellation;
@@ -40,6 +43,7 @@ public partial class GyroShadPs4WizardWindow : Window
     {
         if (DeviceCombo.SelectedItem is not HardwareImuDevice device) return;
         TestButton.IsEnabled = false;
+        EnableShuntButton.IsEnabled = false;
         DeviceCombo.IsEnabled = false;
         _testCancellation?.Dispose();
         _testCancellation = new CancellationTokenSource();
@@ -70,6 +74,7 @@ public partial class GyroShadPs4WizardWindow : Window
             StatusText.Text = result.Message;
             StatusText.Foreground = result.Passed ? System.Windows.Media.Brushes.LightGreen : System.Windows.Media.Brushes.Orange;
             StageText.Text = result.Passed ? "Gyroscope verified" : "Test did not pass";
+            EnableShuntButton.IsEnabled = result.Passed;
         }
         catch (OperationCanceledException)
         {
@@ -97,4 +102,31 @@ public partial class GyroShadPs4WizardWindow : Window
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+
+    private async void EnableShuntButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DeviceCombo.SelectedItem is not HardwareImuDevice device) return;
+        EnableShuntButton.IsEnabled = false;
+        try
+        {
+            var activationMode = ActivationModeCombo.SelectedIndex == 1 ? "hold" : "toggle";
+            using var response = await EngineClient.PostAsJsonAsync("api/shunt/enable", new { device.DevicePath, ActivationMode = activationMode });
+            if (!response.IsSuccessStatusCode)
+            {
+                var detail = await response.Content.ReadAsStringAsync();
+                StatusText.Text = $"Shunt Mode could not start: {detail}";
+                EnableShuntButton.IsEnabled = true;
+                return;
+            }
+
+            StatusText.Text = "Shunt Mode is active. L3 + R3 controls gyro streaming.";
+            StageText.Text = "Shunt Mode active";
+            Close();
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = $"Could not connect to the Shunt Engine: {ex.Message}";
+            EnableShuntButton.IsEnabled = true;
+        }
+    }
 }

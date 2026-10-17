@@ -23,6 +23,7 @@ public class ShuntEngineService : IDisposable
     private readonly XboxToDualShock4ShuntService _shuntRuntime = new();
     private readonly object _imuLock = new();
     private ImuSensorSample? _latestImuSample;
+    private HardwareImuPoller? _activeImuPoller;
     private ushort _reportCounter;
 
     public bool IsRunning { get; private set; }
@@ -41,6 +42,7 @@ public class ShuntEngineService : IDisposable
     /// </summary>
     public event EventHandler<FeedbackEventArgs>? VirtualGamepadFeedback;
     public event Action<bool>? ShuntGyroStateChanged;
+    public event Action<string>? ShuntModeError;
 
     /// <summary>Last formatted HID output report for the active virtual target (diagnostics).</summary>
     public byte[]? LastOutputReport { get; private set; }
@@ -243,6 +245,58 @@ public class ShuntEngineService : IDisposable
         lock (_imuLock) _latestImuSample = null;
     }
 
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task<bool> StartShuntModeAsync(HardwareImuDevice device, GyroActivatorMode activationMode = GyroActivatorMode.Toggle)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        if (!EnableShuntMode(activationMode)) return false;
+        await StopImuPollerAsync().ConfigureAwait(false);
+
+        var poller = device.CreatePoller();
+        poller.SampleReceived += UpdateImuSample;
+        poller.Faulted += OnImuPollerFaulted;
+        _activeImuPoller = poller;
+        try
+        {
+            poller.Start();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            poller.SampleReceived -= UpdateImuSample;
+            poller.Faulted -= OnImuPollerFaulted;
+            await poller.DisposeAsync().ConfigureAwait(false);
+            _activeImuPoller = null;
+            DisableShuntMode();
+            ShuntModeError?.Invoke(ex.Message);
+            return false;
+        }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task StopShuntModeAsync()
+    {
+        DisableShuntMode();
+        await StopImuPollerAsync().ConfigureAwait(false);
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private async Task StopImuPollerAsync()
+    {
+        var poller = _activeImuPoller;
+        _activeImuPoller = null;
+        if (poller is null) return;
+        poller.SampleReceived -= UpdateImuSample;
+        poller.Faulted -= OnImuPollerFaulted;
+        await poller.DisposeAsync().ConfigureAwait(false);
+    }
+
+    private void OnImuPollerFaulted(object? sender, Exception error)
+    {
+        DisableShuntMode();
+        ShuntModeError?.Invoke(error.Message);
+    }
+
     /// <summary>Supplies the most recent physical HID IMU sample to the running Shunt Mode frame loop.</summary>
     public void UpdateImuSample(ImuSensorSample sample)
     {
@@ -253,7 +307,10 @@ public class ShuntEngineService : IDisposable
 
     private void StopVirtualGamepad()
     {
-        DisableShuntMode();
+        if (OperatingSystem.IsWindows())
+            StopShuntModeAsync().GetAwaiter().GetResult();
+        else
+            DisableShuntMode();
         _shuntRuntime.GyroStateChanged -= OnShuntGyroStateChanged;
         if (_activeVirtualGamepad != null)
         {

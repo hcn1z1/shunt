@@ -375,6 +375,7 @@ public sealed class EngineHttpServer : IAsyncDisposable
             }
         });
 
+        ShuntModeEndpoints.Map(app, _engine, _events);
         await app.StartAsync(cancellationToken);
         _application = app;
     }
