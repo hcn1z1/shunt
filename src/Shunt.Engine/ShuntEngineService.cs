@@ -31,6 +31,8 @@ public class ShuntEngineService : IDisposable
     private string? _shuntBlockedDevice;
     private bool _shuntAddedDeviceBlock;
     private bool _filterWasActive;
+    private CancellationTokenSource? _gyroFeedbackCts;
+    private int _gyroFeedbackVersion;
     private ushort _reportCounter;
 
     public bool IsRunning { get; private set; }
@@ -352,7 +354,52 @@ public class ShuntEngineService : IDisposable
         lock (_imuLock) _latestImuSample = sample;
     }
 
-    private void OnShuntGyroStateChanged(bool enabled) => ShuntGyroStateChanged?.Invoke(enabled);
+    private void OnShuntGyroStateChanged(bool enabled)
+    {
+        ShuntGyroStateChanged?.Invoke(enabled);
+        PlayGyroHapticFeedback(enabled);
+    }
+
+    private void PlayGyroHapticFeedback(bool enabled)
+    {
+        var controller = _hardwareDiscovery.SelectedController;
+        if (controller is null) return;
+
+        var version = Interlocked.Increment(ref _gyroFeedbackVersion);
+        _gyroFeedbackCts?.Cancel();
+        _gyroFeedbackCts?.Dispose();
+        var cts = new CancellationTokenSource();
+        _gyroFeedbackCts = cts;
+        controller.Vibrate(0, 0);
+        _ = RunGyroHapticAsync(controller, enabled, version, cts.Token);
+    }
+
+    private async Task RunGyroHapticAsync(IHardwareController controller, bool enabled, int version, CancellationToken token)
+    {
+        try
+        {
+            if (enabled)
+            {
+                controller.Vibrate(0, 52428);
+                await Task.Delay(60, token).ConfigureAwait(false);
+            }
+            else
+            {
+                for (var pulse = 0; pulse < 2; pulse++)
+                {
+                    controller.Vibrate(26214, 26214);
+                    await Task.Delay(35, token).ConfigureAwait(false);
+                    controller.Vibrate(0, 0);
+                    if (pulse == 0) await Task.Delay(35, token).ConfigureAwait(false);
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            if (version == Volatile.Read(ref _gyroFeedbackVersion)) controller.Vibrate(0, 0);
+        }
+    }
 
     private void OnShuntTouchpadActionChanged(string action)
     {

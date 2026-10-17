@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -150,6 +151,7 @@ public partial class GamepadCanvasView : UserControl
 
     private DispatcherTimer? _inputGlowTimer;
     private DispatcherTimer? _shuntHudTimer;
+    private bool? _lastShuntHudGyroState;
     private static readonly HttpClient ShuntHudClient = new()
     {
         BaseAddress = new Uri("http://127.0.0.1:35474/"),
@@ -218,9 +220,19 @@ public partial class GamepadCanvasView : UserControl
             var state = json.RootElement;
             var enabled = state.TryGetProperty("enabled", out var enabledValue) && enabledValue.GetBoolean();
             ShuntHud.Visibility = enabled ? Visibility.Visible : Visibility.Collapsed;
-            if (!enabled) return;
+            if (!enabled)
+            {
+                _lastShuntHudGyroState = null;
+                return;
+            }
 
             var gyroEnabled = state.TryGetProperty("gyroEnabled", out var gyroValue) && gyroValue.GetBoolean();
+            if (_lastShuntHudGyroState.HasValue && _lastShuntHudGyroState.Value != gyroEnabled)
+            {
+                if (gyroEnabled) SystemSounds.Asterisk.Play();
+                else SystemSounds.Exclamation.Play();
+            }
+            _lastShuntHudGyroState = gyroEnabled;
             ShuntGyroStatus.Text = gyroEnabled ? "GYRO: STREAMING" : "GYRO: PAUSED";
             ShuntGyroStatus.Foreground = gyroEnabled ? ColorBrush("#81CF66") : ColorBrush("#C7CDD5");
 
